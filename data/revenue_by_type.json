@@ -1,0 +1,919 @@
+{
+  "source": "postgres",
+  "table": "mission_control_monthly_revenue + accounts_consolidated",
+  "generated_at": "2026-03-06",
+  "monthly_revenue": [
+    {
+      "month": "2021-01-01",
+      "revenue_type": "BASE",
+      "revenue": 1785426.9,
+      "account_count": 15635
+    },
+    {
+      "month": "2021-01-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 29.64,
+      "account_count": 1
+    },
+    {
+      "month": "2021-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 478780.92,
+      "account_count": 38
+    },
+    {
+      "month": "2021-02-01",
+      "revenue_type": "BASE",
+      "revenue": 1891280.82,
+      "account_count": 15694
+    },
+    {
+      "month": "2021-02-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 28.35,
+      "account_count": 1
+    },
+    {
+      "month": "2021-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 514364.97,
+      "account_count": 38
+    },
+    {
+      "month": "2021-03-01",
+      "revenue_type": "BASE",
+      "revenue": 2194419.48,
+      "account_count": 16887
+    },
+    {
+      "month": "2021-03-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 30.54,
+      "account_count": 1
+    },
+    {
+      "month": "2021-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 569699.2,
+      "account_count": 38
+    },
+    {
+      "month": "2021-04-01",
+      "revenue_type": "BASE",
+      "revenue": 2302545.64,
+      "account_count": 16297
+    },
+    {
+      "month": "2021-04-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 14.18,
+      "account_count": 1
+    },
+    {
+      "month": "2021-04-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 817875.6,
+      "account_count": 38
+    },
+    {
+      "month": "2021-05-01",
+      "revenue_type": "BASE",
+      "revenue": 2365357.33,
+      "account_count": 17504
+    },
+    {
+      "month": "2021-05-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.63,
+      "account_count": 1
+    },
+    {
+      "month": "2021-05-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 869701.63,
+      "account_count": 39
+    },
+    {
+      "month": "2021-06-01",
+      "revenue_type": "BASE",
+      "revenue": 2755137.94,
+      "account_count": 15864
+    },
+    {
+      "month": "2021-06-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.93,
+      "account_count": 1
+    },
+    {
+      "month": "2021-06-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1050871.98,
+      "account_count": 39
+    },
+    {
+      "month": "2021-07-01",
+      "revenue_type": "BASE",
+      "revenue": 2998997.48,
+      "account_count": 17857
+    },
+    {
+      "month": "2021-07-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2021-07-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 791588.76,
+      "account_count": 38
+    },
+    {
+      "month": "2021-08-01",
+      "revenue_type": "BASE",
+      "revenue": 3169012.07,
+      "account_count": 17576
+    },
+    {
+      "month": "2021-08-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.74,
+      "account_count": 1
+    },
+    {
+      "month": "2021-08-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1440295.23,
+      "account_count": 39
+    },
+    {
+      "month": "2021-09-01",
+      "revenue_type": "BASE",
+      "revenue": 3240107.52,
+      "account_count": 18882
+    },
+    {
+      "month": "2021-09-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 14.21,
+      "account_count": 1
+    },
+    {
+      "month": "2021-09-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1899258.06,
+      "account_count": 39
+    },
+    {
+      "month": "2021-10-01",
+      "revenue_type": "BASE",
+      "revenue": 3988096.12,
+      "account_count": 18056
+    },
+    {
+      "month": "2021-10-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2021-10-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1544384.79,
+      "account_count": 39
+    },
+    {
+      "month": "2021-11-01",
+      "revenue_type": "BASE",
+      "revenue": 4235407.32,
+      "account_count": 17133
+    },
+    {
+      "month": "2021-11-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.42,
+      "account_count": 1
+    },
+    {
+      "month": "2021-11-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1230177.89,
+      "account_count": 39
+    },
+    {
+      "month": "2021-12-01",
+      "revenue_type": "BASE",
+      "revenue": 4371601.42,
+      "account_count": 19739
+    },
+    {
+      "month": "2021-12-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2021-12-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1308653.08,
+      "account_count": 38
+    },
+    {
+      "month": "2022-01-01",
+      "revenue_type": "BASE",
+      "revenue": 4356144.03,
+      "account_count": 20751
+    },
+    {
+      "month": "2022-01-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 14.03,
+      "account_count": 1
+    },
+    {
+      "month": "2022-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1312261.72,
+      "account_count": 40
+    },
+    {
+      "month": "2022-02-01",
+      "revenue_type": "BASE",
+      "revenue": 4392344.95,
+      "account_count": 20320
+    },
+    {
+      "month": "2022-02-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.43,
+      "account_count": 1
+    },
+    {
+      "month": "2022-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1425066.4,
+      "account_count": 40
+    },
+    {
+      "month": "2022-03-01",
+      "revenue_type": "BASE",
+      "revenue": 5139221.39,
+      "account_count": 22573
+    },
+    {
+      "month": "2022-03-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.42,
+      "account_count": 1
+    },
+    {
+      "month": "2022-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1523273.18,
+      "account_count": 39
+    },
+    {
+      "month": "2022-04-01",
+      "revenue_type": "BASE",
+      "revenue": 4944827.16,
+      "account_count": 20209
+    },
+    {
+      "month": "2022-04-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.89,
+      "account_count": 1
+    },
+    {
+      "month": "2022-04-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1207403.72,
+      "account_count": 39
+    },
+    {
+      "month": "2022-05-01",
+      "revenue_type": "BASE",
+      "revenue": 5269115.81,
+      "account_count": 24997
+    },
+    {
+      "month": "2022-05-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.95,
+      "account_count": 1
+    },
+    {
+      "month": "2022-05-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1688515.78,
+      "account_count": 39
+    },
+    {
+      "month": "2022-06-01",
+      "revenue_type": "BASE",
+      "revenue": 5598506.28,
+      "account_count": 40260
+    },
+    {
+      "month": "2022-06-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-06-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1292485.85,
+      "account_count": 39
+    },
+    {
+      "month": "2022-07-01",
+      "revenue_type": "BASE",
+      "revenue": 6217715.86,
+      "account_count": 54162
+    },
+    {
+      "month": "2022-07-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-07-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1287382.54,
+      "account_count": 39
+    },
+    {
+      "month": "2022-08-01",
+      "revenue_type": "BASE",
+      "revenue": 7323889.81,
+      "account_count": 42162
+    },
+    {
+      "month": "2022-08-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-08-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1446770.93,
+      "account_count": 39
+    },
+    {
+      "month": "2022-09-01",
+      "revenue_type": "BASE",
+      "revenue": 7317630.72,
+      "account_count": 33385
+    },
+    {
+      "month": "2022-09-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-09-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1264128.37,
+      "account_count": 38
+    },
+    {
+      "month": "2022-10-01",
+      "revenue_type": "BASE",
+      "revenue": 8898645.4,
+      "account_count": 32987
+    },
+    {
+      "month": "2022-10-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-10-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1671409.04,
+      "account_count": 38
+    },
+    {
+      "month": "2022-11-01",
+      "revenue_type": "BASE",
+      "revenue": 9208424.84,
+      "account_count": 26604
+    },
+    {
+      "month": "2022-11-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-11-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1780592.78,
+      "account_count": 39
+    },
+    {
+      "month": "2022-12-01",
+      "revenue_type": "BASE",
+      "revenue": 6651315.39,
+      "account_count": 27092
+    },
+    {
+      "month": "2022-12-01",
+      "revenue_type": "POLITICAL",
+      "revenue": 13.36,
+      "account_count": 1
+    },
+    {
+      "month": "2022-12-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 977417.4,
+      "account_count": 39
+    },
+    {
+      "month": "2023-01-01",
+      "revenue_type": "BASE",
+      "revenue": 6525373.45,
+      "account_count": 23514
+    },
+    {
+      "month": "2023-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 935434.44,
+      "account_count": 38
+    },
+    {
+      "month": "2023-02-01",
+      "revenue_type": "BASE",
+      "revenue": 6390212.35,
+      "account_count": 21687
+    },
+    {
+      "month": "2023-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 819001.49,
+      "account_count": 38
+    },
+    {
+      "month": "2023-03-01",
+      "revenue_type": "BASE",
+      "revenue": 7339152.51,
+      "account_count": 22279
+    },
+    {
+      "month": "2023-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1078394.07,
+      "account_count": 38
+    },
+    {
+      "month": "2023-04-01",
+      "revenue_type": "BASE",
+      "revenue": 7154983.53,
+      "account_count": 19888
+    },
+    {
+      "month": "2023-04-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1151295.89,
+      "account_count": 37
+    },
+    {
+      "month": "2023-05-01",
+      "revenue_type": "BASE",
+      "revenue": 8576877.29,
+      "account_count": 21809
+    },
+    {
+      "month": "2023-05-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1164751.98,
+      "account_count": 37
+    },
+    {
+      "month": "2023-06-01",
+      "revenue_type": "BASE",
+      "revenue": 9650478.97,
+      "account_count": 24036
+    },
+    {
+      "month": "2023-06-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1213423.17,
+      "account_count": 38
+    },
+    {
+      "month": "2023-07-01",
+      "revenue_type": "BASE",
+      "revenue": 9325924.96,
+      "account_count": 23771
+    },
+    {
+      "month": "2023-07-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1305513.9,
+      "account_count": 38
+    },
+    {
+      "month": "2023-08-01",
+      "revenue_type": "BASE",
+      "revenue": 9690667.89,
+      "account_count": 21354
+    },
+    {
+      "month": "2023-08-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1398314.6,
+      "account_count": 34
+    },
+    {
+      "month": "2023-09-01",
+      "revenue_type": "BASE",
+      "revenue": 9776791.67,
+      "account_count": 21274
+    },
+    {
+      "month": "2023-09-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1316403.82,
+      "account_count": 34
+    },
+    {
+      "month": "2023-10-01",
+      "revenue_type": "BASE",
+      "revenue": 9962860.8,
+      "account_count": 22437
+    },
+    {
+      "month": "2023-10-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1870662.42,
+      "account_count": 34
+    },
+    {
+      "month": "2023-11-01",
+      "revenue_type": "BASE",
+      "revenue": 10167121.97,
+      "account_count": 22199
+    },
+    {
+      "month": "2023-11-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1815298.78,
+      "account_count": 33
+    },
+    {
+      "month": "2023-12-01",
+      "revenue_type": "BASE",
+      "revenue": 9159231.59,
+      "account_count": 22101
+    },
+    {
+      "month": "2023-12-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1545393.21,
+      "account_count": 33
+    },
+    {
+      "month": "2024-01-01",
+      "revenue_type": "BASE",
+      "revenue": 9641851.31,
+      "account_count": 21088
+    },
+    {
+      "month": "2024-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1427370.73,
+      "account_count": 34
+    },
+    {
+      "month": "2024-02-01",
+      "revenue_type": "BASE",
+      "revenue": 9954071.61,
+      "account_count": 18670
+    },
+    {
+      "month": "2024-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1682666.77,
+      "account_count": 31
+    },
+    {
+      "month": "2024-03-01",
+      "revenue_type": "BASE",
+      "revenue": 10334339.97,
+      "account_count": 19645
+    },
+    {
+      "month": "2024-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 2003698.82,
+      "account_count": 32
+    },
+    {
+      "month": "2024-04-01",
+      "revenue_type": "BASE",
+      "revenue": 10535840.73,
+      "account_count": 18862
+    },
+    {
+      "month": "2024-04-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1653517.21,
+      "account_count": 31
+    },
+    {
+      "month": "2024-05-01",
+      "revenue_type": "BASE",
+      "revenue": 11105716.34,
+      "account_count": 18761
+    },
+    {
+      "month": "2024-05-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1783535.69,
+      "account_count": 31
+    },
+    {
+      "month": "2024-06-01",
+      "revenue_type": "BASE",
+      "revenue": 11573337.14,
+      "account_count": 17396
+    },
+    {
+      "month": "2024-06-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1755810.07,
+      "account_count": 30
+    },
+    {
+      "month": "2024-07-01",
+      "revenue_type": "BASE",
+      "revenue": 11520285.85,
+      "account_count": 16948
+    },
+    {
+      "month": "2024-07-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 2200368.99,
+      "account_count": 30
+    },
+    {
+      "month": "2024-08-01",
+      "revenue_type": "BASE",
+      "revenue": 13008600.2,
+      "account_count": 16415
+    },
+    {
+      "month": "2024-08-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 2766468.6,
+      "account_count": 30
+    },
+    {
+      "month": "2024-09-01",
+      "revenue_type": "BASE",
+      "revenue": 8909685.46,
+      "account_count": 17042
+    },
+    {
+      "month": "2024-09-01",
+      "revenue_type": "POLITICAL",
+      "revenue": -816.15,
+      "account_count": 1
+    },
+    {
+      "month": "2024-09-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 2755520.43,
+      "account_count": 30
+    },
+    {
+      "month": "2024-10-01",
+      "revenue_type": "BASE",
+      "revenue": 20969949.71,
+      "account_count": 17567
+    },
+    {
+      "month": "2024-10-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 4188788.49,
+      "account_count": 30
+    },
+    {
+      "month": "2024-11-01",
+      "revenue_type": "BASE",
+      "revenue": 15459840.4,
+      "account_count": 17154
+    },
+    {
+      "month": "2024-11-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 2801593.18,
+      "account_count": 31
+    },
+    {
+      "month": "2024-12-01",
+      "revenue_type": "BASE",
+      "revenue": 11917604.03,
+      "account_count": 17502
+    },
+    {
+      "month": "2024-12-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1749768.94,
+      "account_count": 30
+    },
+    {
+      "month": "2025-01-01",
+      "revenue_type": "BASE",
+      "revenue": 11150106.3,
+      "account_count": 17349
+    },
+    {
+      "month": "2025-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1441185.37,
+      "account_count": 30
+    },
+    {
+      "month": "2025-02-01",
+      "revenue_type": "BASE",
+      "revenue": 10397458.7,
+      "account_count": 17119
+    },
+    {
+      "month": "2025-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1179751.16,
+      "account_count": 30
+    },
+    {
+      "month": "2025-03-01",
+      "revenue_type": "BASE",
+      "revenue": 11888506.62,
+      "account_count": 17797
+    },
+    {
+      "month": "2025-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1449236.33,
+      "account_count": 30
+    },
+    {
+      "month": "2025-04-01",
+      "revenue_type": "BASE",
+      "revenue": 11851347.78,
+      "account_count": 18026
+    },
+    {
+      "month": "2025-04-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1619049.54,
+      "account_count": 30
+    },
+    {
+      "month": "2025-05-01",
+      "revenue_type": "BASE",
+      "revenue": 11965529.06,
+      "account_count": 18934
+    },
+    {
+      "month": "2025-05-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1382805.76,
+      "account_count": 30
+    },
+    {
+      "month": "2025-06-01",
+      "revenue_type": "BASE",
+      "revenue": 12302397.21,
+      "account_count": 20305
+    },
+    {
+      "month": "2025-06-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1191316.44,
+      "account_count": 30
+    },
+    {
+      "month": "2025-07-01",
+      "revenue_type": "BASE",
+      "revenue": 12530246.47,
+      "account_count": 23399
+    },
+    {
+      "month": "2025-07-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1312874.92,
+      "account_count": 29
+    },
+    {
+      "month": "2025-08-01",
+      "revenue_type": "BASE",
+      "revenue": 12948850.22,
+      "account_count": 26869
+    },
+    {
+      "month": "2025-08-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1320749.0,
+      "account_count": 29
+    },
+    {
+      "month": "2025-09-01",
+      "revenue_type": "BASE",
+      "revenue": 14043026.6,
+      "account_count": 30325
+    },
+    {
+      "month": "2025-09-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1516293.2,
+      "account_count": 30
+    },
+    {
+      "month": "2025-10-01",
+      "revenue_type": "BASE",
+      "revenue": 15685639.94,
+      "account_count": 33397
+    },
+    {
+      "month": "2025-10-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1485051.48,
+      "account_count": 31
+    },
+    {
+      "month": "2025-11-01",
+      "revenue_type": "BASE",
+      "revenue": 14919696.15,
+      "account_count": 29911
+    },
+    {
+      "month": "2025-11-01",
+      "revenue_type": "POLITICAL",
+      "revenue": -0.0,
+      "account_count": 1
+    },
+    {
+      "month": "2025-11-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1510905.57,
+      "account_count": 29
+    },
+    {
+      "month": "2025-12-01",
+      "revenue_type": "BASE",
+      "revenue": 15590035.47,
+      "account_count": 30166
+    },
+    {
+      "month": "2025-12-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1891598.5,
+      "account_count": 29
+    },
+    {
+      "month": "2026-01-01",
+      "revenue_type": "BASE",
+      "revenue": 16242254.14,
+      "account_count": 31920
+    },
+    {
+      "month": "2026-01-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1369504.19,
+      "account_count": 29
+    },
+    {
+      "month": "2026-02-01",
+      "revenue_type": "BASE",
+      "revenue": 16386413.97,
+      "account_count": 42833
+    },
+    {
+      "month": "2026-02-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 1550136.55,
+      "account_count": 29
+    },
+    {
+      "month": "2026-03-01",
+      "revenue_type": "BASE",
+      "revenue": 4646300.8,
+      "account_count": 47135
+    },
+    {
+      "month": "2026-03-01",
+      "revenue_type": "VARIABLE",
+      "revenue": 232595.08,
+      "account_count": 29
+    }
+  ]
+}
