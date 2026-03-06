@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Sheet - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 240px;
+            background: #0c1222;
+            border-right: 1px solid #1e293b;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .logo {
+            padding: 0 20px 20px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo .bolt { color: #facc15; }
+        .updated {
+            padding: 0 20px 20px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .nav-section {
+            margin-top: 16px;
+        }
+        .nav-section-title {
+            padding: 8px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+        .nav-item:hover {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+        .nav-item.active {
+            background: #1e293b;
+            color: #f8fafc;
+            border-left: 3px solid #3b82f6;
+            padding-left: 17px;
+        }
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 24px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #334155;
+        }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #334155;
+        }
+        .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
+        .kpi-change { font-size: 12px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .kpi-change.negative { color: #f87171; }
+        
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #334155;
+            margin-bottom: 24px;
+        }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 1200px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        
+        .balance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 1000px) {
+            .balance-grid { grid-template-columns: 1fr; }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: right;
+            border-bottom: 1px solid #334155;
+        }
+        th { 
+            color: #94a3b8; 
+            font-weight: 500; 
+            text-transform: uppercase; 
+            font-size: 10px;
+            position: sticky;
+            top: 0;
+            background: #1e293b;
+        }
+        th:first-child, td:first-child { 
+            text-align: left; 
+        }
+        tr:hover { background: #0f172a; }
+        .section-header {
+            font-weight: 700;
+            background: #0f172a;
+            color: #f8fafc;
+        }
+        .subtotal-row {
+            font-weight: 600;
+            background: #1a2332;
+            border-top: 1px solid #475569;
+        }
+        .subtotal-row td { color: #f8fafc; }
+        .total-row {
+            font-weight: 700;
+            background: #0f172a;
+            border-top: 2px solid #475569;
+        }
+        .total-row td { color: #f8fafc; }
+        .indent { padding-left: 20px !important; }
+        .indent-2 { padding-left: 36px !important; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <span class="bolt">⚡</span> Telnyx FP&A
+        </div>
+        <div class="updated">Updated: Mar 6, 2026</div>
+        
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">📊</span> Dashboard
+        </a>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">💰</span> Overview
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">📦</span> By Segment
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">🏷️</span> By Product
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">🌍</span> By Region
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">📈</span> Drivers
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Financials</div>
+            <a href="pnl.html" class="nav-item">
+                <span class="nav-icon">📄</span> P&L
+            </a>
+            <a href="balance_sheet.html" class="nav-item active">
+                <span class="nav-icon">📋</span> Balance Sheet
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon">💵</span> Cash Flow
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Balance Sheet</h1>
+                <div class="subtitle">Consolidated balance sheet as of Feb 2026 • Source: Campfire</div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Assets</div>
+                <div class="kpi-value">$285.3M</div>
+                <div class="kpi-change positive">↑ 12.4% YoY</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Liabilities</div>
+                <div class="kpi-value">$142.8M</div>
+                <div class="kpi-change">50.1% of assets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Equity</div>
+                <div class="kpi-value">$142.5M</div>
+                <div class="kpi-change positive">49.9% of assets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Cash Position</div>
+                <div class="kpi-value">$9.8M</div>
+                <div class="kpi-change">3.4% of assets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Current Ratio</div>
+                <div class="kpi-value">1.42</div>
+                <div class="kpi-change positive">Healthy</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">Asset Composition</div>
+                <canvas id="assetsChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">Liabilities & Equity</div>
+                <canvas id="liabilitiesChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="balance-grid">
+            <div class="card">
+                <div class="card-title">Assets</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Dec 2025</th>
+                                <th>Feb 2026</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section-header">
+                                <td>Current Assets</td>
+                                <td></td><td></td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Cash & Cash Equivalents</td>
+                                <td>$9,848,077</td>
+                                <td>$9,702,704</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Accounts Receivable</td>
+                                <td>$38,245,892</td>
+                                <td>$42,156,340</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Unbilled Receivables</td>
+                                <td>$12,456,230</td>
+                                <td>$13,892,456</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Prepaid Expenses</td>
+                                <td>$8,234,567</td>
+                                <td>$7,892,345</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Other Current Assets</td>
+                                <td>$5,678,234</td>
+                                <td>$5,234,567</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td>Total Current Assets</td>
+                                <td>$74,463,000</td>
+                                <td>$78,878,412</td>
+                            </tr>
+                            
+                            <tr class="section-header">
+                                <td>Non-Current Assets</td>
+                                <td></td><td></td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Property & Equipment</td>
+                                <td>$125,456,789</td>
+                                <td>$128,234,567</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Intangible Assets</td>
+                                <td>$45,678,234</td>
+                                <td>$44,892,345</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Other Assets</td>
+                                <td>$32,456,123</td>
+                                <td>$33,256,890</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td>Total Non-Current Assets</td>
+                                <td>$203,591,146</td>
+                                <td>$206,383,802</td>
+                            </tr>
+                            
+                            <tr class="total-row">
+                                <td>Total Assets</td>
+                                <td>$278,054,146</td>
+                                <td>$285,262,214</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Liabilities & Equity</div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Account</th>
+                                <th>Dec 2025</th>
+                                <th>Feb 2026</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section-header">
+                                <td>Current Liabilities</td>
+                                <td></td><td></td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Accounts Payable</td>
+                                <td>$18,456,789</td>
+                                <td>$19,234,567</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Accrued Expenses</td>
+                                <td>$12,345,678</td>
+                                <td>$13,456,789</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Deferred Revenue</td>
+                                <td>$15,678,234</td>
+                                <td>$16,892,345</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Other Current Liab.</td>
+                                <td>$8,234,567</td>
+                                <td>$6,234,567</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td>Total Current Liab.</td>
+                                <td>$54,715,268</td>
+                                <td>$55,818,268</td>
+                            </tr>
+                            
+                            <tr class="section-header">
+                                <td>Long-Term Liabilities</td>
+                                <td></td><td></td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Long-Term Debt</td>
+                                <td>$65,456,789</td>
+                                <td>$64,892,345</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Other LT Liabilities</td>
+                                <td>$22,345,678</td>
+                                <td>$22,056,789</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td>Total Long-Term Liab.</td>
+                                <td>$87,802,467</td>
+                                <td>$86,949,134</td>
+                            </tr>
+                            
+                            <tr class="total-row">
+                                <td>Total Liabilities</td>
+                                <td>$142,517,735</td>
+                                <td>$142,767,402</td>
+                            </tr>
+                            
+                            <tr class="section-header">
+                                <td>Stockholders' Equity</td>
+                                <td></td><td></td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Common Stock</td>
+                                <td>$85,456,789</td>
+                                <td>$85,456,789</td>
+                            </tr>
+                            <tr>
+                                <td class="indent">Retained Earnings</td>
+                                <td>$50,079,622</td>
+                                <td>$57,038,023</td>
+                            </tr>
+                            <tr class="subtotal-row">
+                                <td>Total Equity</td>
+                                <td>$135,536,411</td>
+                                <td>$142,494,812</td>
+                            </tr>
+                            
+                            <tr class="total-row">
+                                <td>Total Liab. & Equity</td>
+                                <td>$278,054,146</td>
+                                <td>$285,262,214</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Monthly Trend (2025)</div>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </main>
+    
+    <script>
+        // Assets Composition
+        const assetsCtx = document.getElementById('assetsChart').getContext('2d');
+        new Chart(assetsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Cash', 'Receivables', 'PP&E', 'Intangibles', 'Other'],
+                datasets: [{
+                    data: [9.7, 56.0, 128.2, 44.9, 46.4],
+                    backgroundColor: ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#64748b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { 
+                        position: 'right',
+                        labels: { color: '#e2e8f0', padding: 12 }
+                    }
+                }
+            }
+        });
+        
+        // Liabilities & Equity
+        const liabCtx = document.getElementById('liabilitiesChart').getContext('2d');
+        new Chart(liabCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Current Liab.', 'Long-Term Debt', 'Other LT Liab.', 'Equity'],
+                datasets: [{
+                    data: [55.8, 64.9, 22.1, 142.5],
+                    backgroundColor: ['#f87171', '#ef4444', '#dc2626', '#22c55e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { 
+                        position: 'right',
+                        labels: { color: '#e2e8f0', padding: 12 }
+                    }
+                }
+            }
+        });
+        
+        // Monthly Trend
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan 26', 'Feb'],
+                datasets: [{
+                    label: 'Total Assets',
+                    data: [252, 255, 258, 260, 262, 265, 268, 270, 272, 275, 277, 278, 282, 285],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Total Equity',
+                    data: [115, 118, 120, 122, 124, 126, 128, 130, 132, 133, 135, 136, 139, 142],
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Cash',
+                    data: [5.7, 6.7, 5.9, 6.9, 6.9, 5.5, 6.2, 5.6, 6.1, 7.1, 7.7, 9.8, 6.9, 9.7],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' },
+                        grid: { color: '#334155' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        ticks: { color: '#f59e0b', callback: v => '$' + v + 'M' },
+                        grid: { drawOnChartArea: false }
+                    },
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid: { color: '#334155' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e2e8f0' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
