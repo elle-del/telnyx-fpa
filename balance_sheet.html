@@ -17,8 +17,8 @@
         
         .sidebar { transition: transform 0.3s; z-index: 100; }
         .sidebar.collapsed { transform: translateX(-240px); }
-        .sidebar-toggle { position: fixed; top: 16px; left: 16px; z-index: 101; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 18px; transition: left 0.3s; }
-        .sidebar-toggle.open { left: 256px; }
+        
+        
         .sidebar-old {
             width: 240px;
             background: #0c1222;
@@ -87,6 +87,9 @@
             padding: 24px;
         }
         
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
         .header {
             display: flex;
             justify-content: space-between;
@@ -197,7 +200,7 @@
     </style>
 </head>
 <body>
-    <button class="sidebar-toggle open" onclick="toggleSidebar()">☰</button>
+    
     <nav class="sidebar" id="sidebar">
         <div class="logo">
             <span class="bolt">⚡</span> Telnyx FP&A
@@ -262,7 +265,7 @@
     </nav>
     
     <main class="main" id="main">
-        <div class="header">
+        <div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button>
             <div>
                 <h1>Balance Sheet</h1>
                 <div class="subtitle">Consolidated balance sheet as of Feb 2026 • Source: Campfire</div>
