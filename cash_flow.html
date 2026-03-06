@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .updated { padding: 0 20px 20px; font-size: 12px; color: #64748b; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+        .main { margin-left: 240px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
+        .kpi-change { font-size: 12px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .kpi-change.negative { color: #f87171; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .section-header { font-weight: 700; background: #0f172a; color: #f8fafc; }
+        .subtotal-row { font-weight: 600; background: #1a2332; border-top: 1px solid #475569; }
+        .total-row { font-weight: 700; background: #0f172a; border-top: 2px solid #475569; }
+        .indent { padding-left: 20px !important; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <div class="updated">Updated: Mar 6, 2026</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">💰</span> Overview</a>
+            <a href="revenue_segment.html" class="nav-item"><span class="nav-icon">📦</span> By Segment</a>
+            <a href="revenue_product.html" class="nav-item"><span class="nav-icon">🏷️</span> By Product</a>
+            <a href="revenue_region.html" class="nav-item"><span class="nav-icon">🌍</span> By Region</a>
+            <a href="#" class="nav-item"><span class="nav-icon">📈</span> Drivers</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Financials</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+            <a href="cash_flow.html" class="nav-item active"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Planning</div>
+            <a href="headcount.html" class="nav-item"><span class="nav-icon">👥</span> Headcount</a>
+            <a href="#" class="nav-item"><span class="nav-icon">🔄</span> Scenarios</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections<span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span></a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Cash Flow Statement</h1>
+                <div class="subtitle">Consolidated cash flows • Source: Campfire</div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Cash from Operations</div>
+                <div class="kpi-value positive">$12.4M</div>
+                <div class="kpi-change positive">2025 YTD</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Cash from Investing</div>
+                <div class="kpi-value negative">-$8.2M</div>
+                <div class="kpi-change">CapEx & acquisitions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Cash from Financing</div>
+                <div class="kpi-value negative">-$2.1M</div>
+                <div class="kpi-change">Debt payments</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Net Change in Cash</div>
+                <div class="kpi-value positive">$2.1M</div>
+                <div class="kpi-change positive">↑ vs prior year</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Cash Flow Trend</div>
+            <canvas id="cashChart" height="100"></canvas>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Cash Flow Statement</div>
+            <table>
+                <thead>
+                    <tr><th>Line Item</th><th>2024</th><th>2025</th><th>Jan 26</th><th>Feb 26</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="section-header"><td>Operating Activities</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Net Income</td><td>$8,245,000</td><td>$12,890,000</td><td>$1,245,000</td><td>$1,456,000</td></tr>
+                    <tr><td class="indent">Depreciation & Amortization</td><td>$4,567,000</td><td>$5,234,000</td><td>$445,000</td><td>$448,000</td></tr>
+                    <tr><td class="indent">Changes in Working Capital</td><td>-$2,345,000</td><td>-$1,890,000</td><td>-$234,000</td><td>$123,000</td></tr>
+                    <tr><td class="indent">Other Operating</td><td>$890,000</td><td>$756,000</td><td>$67,000</td><td>$54,000</td></tr>
+                    <tr class="subtotal-row"><td>Net Cash from Operations</td><td class="positive">$11,357,000</td><td class="positive">$16,990,000</td><td class="positive">$1,523,000</td><td class="positive">$2,081,000</td></tr>
+                    
+                    <tr class="section-header"><td>Investing Activities</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Capital Expenditures</td><td>-$6,789,000</td><td>-$7,234,000</td><td>-$623,000</td><td>-$567,000</td></tr>
+                    <tr><td class="indent">Acquisitions</td><td>-$2,500,000</td><td>$0</td><td>$0</td><td>$0</td></tr>
+                    <tr><td class="indent">Other Investing</td><td>$234,000</td><td>$456,000</td><td>$34,000</td><td>$45,000</td></tr>
+                    <tr class="subtotal-row"><td>Net Cash from Investing</td><td class="negative">-$9,055,000</td><td class="negative">-$6,778,000</td><td class="negative">-$589,000</td><td class="negative">-$522,000</td></tr>
+                    
+                    <tr class="section-header"><td>Financing Activities</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Debt Repayment</td><td>-$1,500,000</td><td>-$2,000,000</td><td>-$167,000</td><td>-$167,000</td></tr>
+                    <tr><td class="indent">Equity Issuance</td><td>$500,000</td><td>$0</td><td>$0</td><td>$0</td></tr>
+                    <tr><td class="indent">Other Financing</td><td>-$234,000</td><td>-$123,000</td><td>-$12,000</td><td>-$8,000</td></tr>
+                    <tr class="subtotal-row"><td>Net Cash from Financing</td><td class="negative">-$1,234,000</td><td class="negative">-$2,123,000</td><td class="negative">-$179,000</td><td class="negative">-$175,000</td></tr>
+                    
+                    <tr class="total-row"><td>Net Change in Cash</td><td class="positive">$1,068,000</td><td class="positive">$8,089,000</td><td class="positive">$755,000</td><td class="positive">$1,384,000</td></tr>
+                    <tr><td class="indent">Beginning Cash</td><td>$4,650,000</td><td>$5,718,000</td><td>$9,848,077</td><td>$6,936,461</td></tr>
+                    <tr class="total-row"><td>Ending Cash</td><td>$5,718,000</td><td>$9,848,077</td><td>$6,936,461</td><td>$9,702,704</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <script>
+        new Chart(document.getElementById('cashChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Q1 24', 'Q2', 'Q3', 'Q4', 'Q1 25', 'Q2', 'Q3', 'Q4', 'Jan 26', 'Feb'],
+                datasets: [{
+                    label: 'Operating',
+                    data: [2.8, 2.9, 2.7, 2.9, 3.8, 4.1, 4.2, 4.9, 1.5, 2.1],
+                    backgroundColor: '#22c55e'
+                }, {
+                    label: 'Investing',
+                    data: [-2.1, -2.3, -2.2, -2.5, -1.8, -1.7, -1.6, -1.7, -0.6, -0.5],
+                    backgroundColor: '#f87171'
+                }, {
+                    label: 'Financing',
+                    data: [-0.3, -0.3, -0.3, -0.3, -0.5, -0.5, -0.5, -0.6, -0.2, -0.2],
+                    backgroundColor: '#f59e0b'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue by Region - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .updated { padding: 0 20px 20px; font-size: 12px; color: #64748b; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+        .main { margin-left: 240px; flex: 1; padding: 24px; }
+        .header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 16px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 10px; text-transform: uppercase; }
+        .kpi-value { font-size: 24px; font-weight: 700; margin-top: 4px; color: #f8fafc; }
+        .kpi-change { font-size: 11px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
+        .region-card { background: #0f172a; border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 16px; }
+        .region-flag { font-size: 32px; }
+        .region-info { flex: 1; }
+        .region-name { font-weight: 600; font-size: 15px; }
+        .region-revenue { color: #94a3b8; font-size: 13px; }
+        .region-growth { font-size: 13px; color: #4ade80; }
+        .regions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <div class="updated">Updated: Mar 6, 2026</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">💰</span> Overview</a>
+            <a href="revenue_segment.html" class="nav-item"><span class="nav-icon">📦</span> By Segment</a>
+            <a href="revenue_product.html" class="nav-item"><span class="nav-icon">🏷️</span> By Product</a>
+            <a href="revenue_region.html" class="nav-item active"><span class="nav-icon">🌍</span> By Region</a>
+            <a href="#" class="nav-item"><span class="nav-icon">📈</span> Drivers</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Financials</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Planning</div>
+            <a href="headcount.html" class="nav-item"><span class="nav-icon">👥</span> Headcount</a>
+            <a href="#" class="nav-item"><span class="nav-icon">🔄</span> Scenarios</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections<span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span></a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <h1>Revenue by Region</h1>
+            <div class="subtitle">Geographic breakdown • Source: Postgres</div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">🇺🇸 North America</div>
+                <div class="kpi-value">$112.4M</div>
+                <div class="kpi-change positive">65.1%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">🇪🇺 Europe</div>
+                <div class="kpi-value">$38.6M</div>
+                <div class="kpi-change">22.4%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">🌏 APAC</div>
+                <div class="kpi-value">$15.2M</div>
+                <div class="kpi-change">8.8%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">🌎 LATAM</div>
+                <div class="kpi-value">$6.4M</div>
+                <div class="kpi-change positive">↑ 45% YoY</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">Regional Trend</div>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">2025 Distribution</div>
+                <canvas id="mixChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Top Countries</div>
+            <div class="regions-grid">
+                <div class="region-card"><span class="region-flag">🇺🇸</span><div class="region-info"><div class="region-name">United States</div><div class="region-revenue">$98.2M (56.9%)</div></div><div class="region-growth">↑ 16%</div></div>
+                <div class="region-card"><span class="region-flag">🇨🇦</span><div class="region-info"><div class="region-name">Canada</div><div class="region-revenue">$14.2M (8.2%)</div></div><div class="region-growth">↑ 22%</div></div>
+                <div class="region-card"><span class="region-flag">🇬🇧</span><div class="region-info"><div class="region-name">United Kingdom</div><div class="region-revenue">$12.4M (7.2%)</div></div><div class="region-growth">↑ 18%</div></div>
+                <div class="region-card"><span class="region-flag">🇩🇪</span><div class="region-info"><div class="region-name">Germany</div><div class="region-revenue">$8.6M (5.0%)</div></div><div class="region-growth">↑ 24%</div></div>
+                <div class="region-card"><span class="region-flag">🇦🇺</span><div class="region-info"><div class="region-name">Australia</div><div class="region-revenue">$6.8M (3.9%)</div></div><div class="region-growth">↑ 32%</div></div>
+                <div class="region-card"><span class="region-flag">🇫🇷</span><div class="region-info"><div class="region-name">France</div><div class="region-revenue">$5.4M (3.1%)</div></div><div class="region-growth">↑ 28%</div></div>
+                <div class="region-card"><span class="region-flag">🇧🇷</span><div class="region-info"><div class="region-name">Brazil</div><div class="region-revenue">$3.8M (2.2%)</div></div><div class="region-growth">↑ 52%</div></div>
+                <div class="region-card"><span class="region-flag">🇳🇱</span><div class="region-info"><div class="region-name">Netherlands</div><div class="region-revenue">$3.2M (1.9%)</div></div><div class="region-growth">↑ 19%</div></div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: ['Q1 24', 'Q2', 'Q3', 'Q4', 'Q1 25', 'Q2', 'Q3', 'Q4'],
+                datasets: [
+                    { label: 'North America', data: [22.1, 22.8, 23.4, 24.2, 25.8, 27.2, 28.9, 30.5], borderColor: '#3b82f6', backgroundColor: 'transparent', tension: 0.3 },
+                    { label: 'Europe', data: [7.8, 8.1, 8.4, 8.9, 9.2, 9.4, 9.8, 10.2], borderColor: '#8b5cf6', backgroundColor: 'transparent', tension: 0.3 },
+                    { label: 'APAC', data: [2.8, 2.9, 3.1, 3.4, 3.5, 3.7, 3.9, 4.1], borderColor: '#22c55e', backgroundColor: 'transparent', tension: 0.3 },
+                    { label: 'LATAM', data: [0.9, 1.0, 1.1, 1.3, 1.4, 1.5, 1.7, 1.8], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.3 }
+                ]
+            },
+            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+        });
+        new Chart(document.getElementById('mixChart'), {
+            type: 'doughnut',
+            data: { labels: ['North America', 'Europe', 'APAC', 'LATAM'], datasets: [{ data: [112.4, 38.6, 15.2, 6.4], backgroundColor: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headcount - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .updated { padding: 0 20px 20px; font-size: 12px; color: #64748b; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+        .main { margin-left: 240px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 16px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
+        .kpi-change { font-size: 12px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        tr:hover { background: #0f172a; }
+        .dept-bar { height: 8px; background: #3b82f6; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <div class="updated">Updated: Mar 6, 2026</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">💰</span> Overview</a>
+            <a href="revenue_segment.html" class="nav-item"><span class="nav-icon">📦</span> By Segment</a>
+            <a href="revenue_product.html" class="nav-item"><span class="nav-icon">🏷️</span> By Product</a>
+            <a href="revenue_region.html" class="nav-item"><span class="nav-icon">🌍</span> By Region</a>
+            <a href="#" class="nav-item"><span class="nav-icon">📈</span> Drivers</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Financials</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Planning</div>
+            <a href="headcount.html" class="nav-item active"><span class="nav-icon">👥</span> Headcount</a>
+            <a href="#" class="nav-item"><span class="nav-icon">🔄</span> Scenarios</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections<span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span></a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Headcount</h1>
+                <div class="subtitle">Employee data from Rippling • Last sync: Today 12:30 PM</div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Employees</div>
+                <div class="kpi-value">375</div>
+                <div class="kpi-change positive">↑ 12 this month</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Remote</div>
+                <div class="kpi-value">243</div>
+                <div class="kpi-change">64.8% of workforce</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Office-Based</div>
+                <div class="kpi-value">132</div>
+                <div class="kpi-change">35.2% of workforce</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">24</div>
+                <div class="kpi-change">Avg 15.6 per dept</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">Headcount by Department</div>
+                <canvas id="deptChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">Locations</div>
+                <canvas id="locChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Department Breakdown</div>
+            <table>
+                <thead>
+                    <tr><th>Department</th><th>Headcount</th><th>% of Total</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>NOC</td><td>53</td><td>14.1%</td><td><div class="dept-bar" style="width: 100%"></div></td></tr>
+                    <tr><td>Account Executives</td><td>32</td><td>8.5%</td><td><div class="dept-bar" style="width: 60%"></div></td></tr>
+                    <tr><td>Infrastructure</td><td>20</td><td>5.3%</td><td><div class="dept-bar" style="width: 38%"></div></td></tr>
+                    <tr><td>Python</td><td>20</td><td>5.3%</td><td><div class="dept-bar" style="width: 38%"></div></td></tr>
+                    <tr><td>Sales Development</td><td>18</td><td>4.8%</td><td><div class="dept-bar" style="width: 34%"></div></td></tr>
+                    <tr><td>Elixir</td><td>17</td><td>4.5%</td><td><div class="dept-bar" style="width: 32%"></div></td></tr>
+                    <tr><td>Product Management</td><td>13</td><td>3.5%</td><td><div class="dept-bar" style="width: 25%"></div></td></tr>
+                    <tr><td>Customer Success</td><td>12</td><td>3.2%</td><td><div class="dept-bar" style="width: 23%"></div></td></tr>
+                    <tr><td>Telephony Engineering</td><td>11</td><td>2.9%</td><td><div class="dept-bar" style="width: 21%"></div></td></tr>
+                    <tr><td>Mobile Core</td><td>8</td><td>2.1%</td><td><div class="dept-bar" style="width: 15%"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <script>
+        new Chart(document.getElementById('deptChart'), {
+            type: 'bar',
+            data: {
+                labels: ['NOC', 'Account Execs', 'Infrastructure', 'Python', 'Sales Dev', 'Elixir', 'Product', 'CS', 'Telephony', 'Mobile Core'],
+                datasets: [{
+                    label: 'Employees',
+                    data: [53, 32, 20, 20, 18, 17, 13, 12, 11, 8],
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+        
+        new Chart(document.getElementById('locChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Dublin', 'Amsterdam', 'Denver', 'Chicago', 'Sydney', 'Other'],
+                datasets: [{
+                    data: [63, 29, 26, 12, 8, 237],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
+        });
+    </script>
+</body>
+</html>
