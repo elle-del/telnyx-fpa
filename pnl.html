@@ -7,267 +7,96 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            display: flex;
-            min-height: 100vh;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
         
-        .sidebar { transition: transform 0.3s; z-index: 100; }
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
         .sidebar.collapsed { transform: translateX(-240px); }
-        
-        
-        .sidebar-old {
-            width: 240px;
-            background: #0c1222;
-            border-right: 1px solid #1e293b;
-            padding: 20px 0;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        .logo {
-            padding: 0 20px 20px;
-            font-size: 20px;
-            font-weight: 700;
-            color: #f8fafc;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
         .logo .bolt { color: #facc15; }
-        .updated {
-            padding: 0 20px 20px;
-            font-size: 12px;
-            color: #64748b;
-        }
-        .nav-section {
-            margin-top: 16px;
-        }
-        .nav-section-title {
-            padding: 8px 20px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 20px;
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.15s;
-        }
-        .nav-item:hover {
-            background: #1e293b;
-            color: #f8fafc;
-        }
-        .nav-item.active {
-            background: #1e293b;
-            color: #f8fafc;
-            border-left: 3px solid #3b82f6;
-            padding-left: 17px;
-        }
-        .nav-icon {
-            width: 20px;
-            text-align: center;
-        }
+        .updated { padding: 0 20px 20px; font-size: 12px; color: #64748b; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
         
-        .main { transition: margin-left 0.3s; }
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
         .main.expanded { margin-left: 0; }
-        .main-old {
-            margin-left: 240px;
-            flex: 1;
-            padding: 24px;
-        }
         
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
         .header-left { display: flex; align-items: center; gap: 16px; }
         .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
         .menu-toggle:hover { background: #334155; }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #334155;
-        }
         h1 { font-size: 24px; font-weight: 600; }
         .subtitle { color: #94a3b8; font-size: 14px; }
         
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .kpi-card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid #334155;
-        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 800px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 16px; border: 1px solid #334155; }
         .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
         .kpi-value { font-size: 22px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
         .kpi-change { font-size: 12px; margin-top: 4px; }
         .kpi-change.positive { color: #4ade80; }
-        .kpi-change.negative { color: #f87171; }
         
-        .card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #334155;
-            margin-bottom: 24px;
-        }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
         .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
         
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-        @media (max-width: 1200px) {
-            .charts-grid { grid-template-columns: 1fr; }
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th, td {
-            padding: 10px 8px;
-            text-align: right;
-            border-bottom: 1px solid #334155;
-        }
-        th { 
-            color: #94a3b8; 
-            font-weight: 500; 
-            text-transform: uppercase; 
-            font-size: 10px;
-            position: sticky;
-            top: 0;
-            background: #1e293b;
-        }
-        th:first-child, td:first-child { 
-            text-align: left; 
-            position: sticky;
-            left: 0;
-            background: #1e293b;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
         tr:hover { background: #0f172a; }
-        .section-header {
-            font-weight: 700;
-            background: #0f172a;
-            color: #f8fafc;
-        }
-        .subtotal-row {
-            font-weight: 600;
-            background: #1a2332;
-            border-top: 1px solid #475569;
-        }
-        .subtotal-row td { color: #f8fafc; }
-        .total-row {
-            font-weight: 700;
-            background: #0f172a;
-            border-top: 2px solid #475569;
-        }
-        .total-row td { color: #f8fafc; }
+        .section-header { font-weight: 700; background: #0f172a; color: #f8fafc; }
+        .subtotal-row { font-weight: 600; background: #1a2332; border-top: 1px solid #475569; }
+        .total-row { font-weight: 700; background: #0f172a; border-top: 2px solid #475569; }
         .indent { padding-left: 20px !important; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
-        
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        
-        .year-header {
-            background: #3b82f6 !important;
-            color: white !important;
-            font-weight: 700;
-        }
     </style>
 </head>
 <body>
-    
     <nav class="sidebar" id="sidebar">
-        <div class="logo">
-            <span class="bolt">⚡</span> Telnyx FP&A
-        </div>
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
         <div class="updated">Updated: Mar 6, 2026</div>
-        
-        <a href="index.html" class="nav-item">
-            <span class="nav-icon">📊</span> Dashboard
-        </a>
-        
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
         <div class="nav-section">
             <div class="nav-section-title">Revenue</div>
-            <a href="dashboard.html" class="nav-item">
-                <span class="nav-icon">💰</span> Overview
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">📦</span> By Segment
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">🏷️</span> By Product
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">🌍</span> By Region
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">📈</span> Drivers
-            </a>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">💰</span> Overview</a>
+            <a href="revenue_segment.html" class="nav-item"><span class="nav-icon">📦</span> By Segment</a>
+            <a href="revenue_product.html" class="nav-item"><span class="nav-icon">🏷️</span> By Product</a>
+            <a href="revenue_region.html" class="nav-item"><span class="nav-icon">🌍</span> By Region</a>
+            <a href="#" class="nav-item"><span class="nav-icon">📈</span> Drivers</a>
         </div>
-        
         <div class="nav-section">
             <div class="nav-section-title">Financials</div>
-            <a href="pnl.html" class="nav-item active">
-                <span class="nav-icon">📄</span> P&L
-            </a>
-            <a href="balance_sheet.html" class="nav-item">
-                <span class="nav-icon">📋</span> Balance Sheet
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">💵</span> Cash Flow
-            </a>
+            <a href="pnl.html" class="nav-item active"><span class="nav-icon">📄</span> P&L</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
         </div>
-            <div class="nav-section">
+        <div class="nav-section">
             <div class="nav-section-title">Planning</div>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">👥</span> Headcount
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">🔄</span> Scenarios
-            </a>
+            <a href="headcount.html" class="nav-item"><span class="nav-icon">👥</span> Headcount</a>
+            <a href="#" class="nav-item"><span class="nav-icon">🔄</span> Scenarios</a>
         </div>
-        
         <div class="nav-section">
             <div class="nav-section-title">System</div>
-            <a href="data_connections.html" class="nav-item">
-                <span class="nav-icon">🔌</span> Data Connections
-                <span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span>
-            </a>
-            <a href="#" class="nav-item">
-                <span class="nav-icon">⚙️</span> Settings
-            </a>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections<span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span></a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
         </div>
     </nav>
     
     <main class="main" id="main">
-        <div class="header"><div class="header-left"><button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <div>
-                <h1>Profit & Loss Statement</h1>
-                <div class="subtitle">Consolidated monthly P&L • Source: Campfire + Postgres</div>
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Profit & Loss Statement</h1>
+                    <div class="subtitle">Consolidated monthly P&L • Source: Campfire + Postgres</div>
+                </div>
             </div>
         </div>
         
@@ -312,224 +141,59 @@
         
         <div class="card">
             <div class="card-title">Monthly Income Statement</div>
-            <div class="table-wrapper">
-                <table id="pnlTable">
-                    <thead>
-                        <tr>
-                            <th>Line Item</th>
-                            <th>2024</th>
-                            <th>2025</th>
-                            <th>Jan 26</th>
-                            <th>Feb 26</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="section-header">
-                            <td>Revenue</td>
-                            <td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Base Revenue</td>
-                            <td>$126,544,499</td>
-                            <td>$155,272,841</td>
-                            <td>$16,242,254</td>
-                            <td>$16,386,414</td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Variable Revenue</td>
-                            <td>$18,496,284</td>
-                            <td>$17,300,817</td>
-                            <td>$1,369,504</td>
-                            <td>$1,550,137</td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Political Revenue</td>
-                            <td>$231,132</td>
-                            <td>$0</td>
-                            <td>$0</td>
-                            <td>$0</td>
-                        </tr>
-                        <tr class="subtotal-row">
-                            <td>Total Revenue</td>
-                            <td>$145,271,915</td>
-                            <td>$172,573,658</td>
-                            <td>$17,611,758</td>
-                            <td>$17,936,551</td>
-                        </tr>
-                        
-                        <tr class="section-header">
-                            <td>Cost of Goods Sold</td>
-                            <td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Network Costs</td>
-                            <td>$80,348,981</td>
-                            <td>$78,861,150</td>
-                            <td>$3,630,864</td>
-                            <td>$2,316,663</td>
-                        </tr>
-                        <tr class="subtotal-row">
-                            <td>Total COGS</td>
-                            <td>$80,348,981</td>
-                            <td>$78,861,150</td>
-                            <td>$3,630,864</td>
-                            <td>$2,316,663</td>
-                        </tr>
-                        
-                        <tr class="total-row">
-                            <td>Gross Profit</td>
-                            <td class="positive">$64,922,934</td>
-                            <td class="positive">$93,712,508</td>
-                            <td class="positive">$13,980,894</td>
-                            <td class="positive">$15,619,888</td>
-                        </tr>
-                        <tr>
-                            <td class="indent" style="color: #94a3b8; font-size: 11px;">Gross Margin %</td>
-                            <td style="color: #94a3b8; font-size: 11px;">44.7%</td>
-                            <td style="color: #94a3b8; font-size: 11px;">54.3%</td>
-                            <td style="color: #94a3b8; font-size: 11px;">79.4%</td>
-                            <td style="color: #94a3b8; font-size: 11px;">87.1%</td>
-                        </tr>
-                        
-                        <tr class="section-header">
-                            <td>Operating Expenses</td>
-                            <td></td><td></td><td></td><td></td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Sales & Marketing</td>
-                            <td>$28,000,000</td>
-                            <td>$26,500,000</td>
-                            <td>$1,100,000</td>
-                            <td>$600,000</td>
-                        </tr>
-                        <tr>
-                            <td class="indent">Research & Development</td>
-                            <td>$35,000,000</td>
-                            <td>$34,000,000</td>
-                            <td>$1,400,000</td>
-                            <td>$800,000</td>
-                        </tr>
-                        <tr>
-                            <td class="indent">General & Administrative</td>
-                            <td>$26,680,517</td>
-                            <td>$25,722,066</td>
-                            <td>$997,652</td>
-                            <td>$599,709</td>
-                        </tr>
-                        <tr class="subtotal-row">
-                            <td>Total Operating Expenses</td>
-                            <td>$89,680,517</td>
-                            <td>$86,222,066</td>
-                            <td>$3,497,652</td>
-                            <td>$1,999,709</td>
-                        </tr>
-                        
-                        <tr class="total-row">
-                            <td>Operating Income (EBIT)</td>
-                            <td class="negative">-$24,757,583</td>
-                            <td class="positive">$7,490,442</td>
-                            <td class="positive">$10,483,242</td>
-                            <td class="positive">$13,620,179</td>
-                        </tr>
-                        <tr>
-                            <td class="indent" style="color: #94a3b8; font-size: 11px;">Operating Margin %</td>
-                            <td style="color: #f87171; font-size: 11px;">-17.0%</td>
-                            <td style="color: #4ade80; font-size: 11px;">4.3%</td>
-                            <td style="color: #4ade80; font-size: 11px;">59.5%</td>
-                            <td style="color: #4ade80; font-size: 11px;">75.9%</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <thead><tr><th>Line Item</th><th>2024</th><th>2025</th><th>Jan 26</th><th>Feb 26</th></tr></thead>
+                <tbody>
+                    <tr class="section-header"><td>Revenue</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Base Revenue</td><td>$126,544,499</td><td>$155,272,841</td><td>$16,242,254</td><td>$16,386,414</td></tr>
+                    <tr><td class="indent">Variable Revenue</td><td>$18,496,284</td><td>$17,300,817</td><td>$1,369,504</td><td>$1,550,137</td></tr>
+                    <tr><td class="indent">Political Revenue</td><td>$231,132</td><td>$0</td><td>$0</td><td>$0</td></tr>
+                    <tr class="subtotal-row"><td>Total Revenue</td><td>$145,271,915</td><td>$172,573,658</td><td>$17,611,758</td><td>$17,936,551</td></tr>
+                    <tr class="section-header"><td>Cost of Goods Sold</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Network Costs</td><td>$80,348,981</td><td>$78,861,150</td><td>$3,630,864</td><td>$2,316,663</td></tr>
+                    <tr class="subtotal-row"><td>Total COGS</td><td>$80,348,981</td><td>$78,861,150</td><td>$3,630,864</td><td>$2,316,663</td></tr>
+                    <tr class="total-row"><td>Gross Profit</td><td class="positive">$64,922,934</td><td class="positive">$93,712,508</td><td class="positive">$13,980,894</td><td class="positive">$15,619,888</td></tr>
+                    <tr class="section-header"><td>Operating Expenses</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td class="indent">Sales & Marketing</td><td>$28,000,000</td><td>$26,500,000</td><td>$1,100,000</td><td>$600,000</td></tr>
+                    <tr><td class="indent">Research & Development</td><td>$35,000,000</td><td>$34,000,000</td><td>$1,400,000</td><td>$800,000</td></tr>
+                    <tr><td class="indent">General & Administrative</td><td>$26,680,517</td><td>$25,722,066</td><td>$997,652</td><td>$599,709</td></tr>
+                    <tr class="subtotal-row"><td>Total Operating Expenses</td><td>$89,680,517</td><td>$86,222,066</td><td>$3,497,652</td><td>$1,999,709</td></tr>
+                    <tr class="total-row"><td>Operating Income (EBIT)</td><td class="negative">-$24,757,583</td><td class="positive">$7,490,442</td><td class="positive">$10,483,242</td><td class="positive">$13,620,179</td></tr>
+                </tbody>
+            </table>
         </div>
     </main>
     
     <script>
-        // P&L Trend Chart
-        const pnlCtx = document.getElementById('pnlChart').getContext('2d');
-        new Chart(pnlCtx, {
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+        
+        new Chart(document.getElementById('pnlChart'), {
             type: 'bar',
             data: {
                 labels: ['Jan 24', 'Apr', 'Jul', 'Oct', 'Jan 25', 'Apr', 'Jul', 'Oct', 'Jan 26', 'Feb'],
-                datasets: [{
-                    label: 'Revenue',
-                    data: [11.1, 12.3, 12.1, 12.4, 12.6, 13.5, 13.8, 17.2, 17.6, 17.9],
-                    backgroundColor: '#3b82f6',
-                    order: 2
-                }, {
-                    label: 'Gross Profit',
-                    data: [5.8, 6.2, 4.9, 2.6, 7.0, 7.6, 8.0, 9.0, 14.0, 15.6],
-                    backgroundColor: '#22c55e',
-                    order: 1
-                }, {
-                    label: 'Operating Income',
-                    type: 'line',
-                    data: [-1.3, -0.8, -2.3, -4.8, 0.1, 0.9, 0.8, 1.7, 10.5, 13.6],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    order: 0
-                }]
+                datasets: [
+                    { label: 'Revenue', data: [11.1, 12.3, 12.1, 12.4, 12.6, 13.5, 13.8, 17.2, 17.6, 17.9], backgroundColor: '#3b82f6', order: 2 },
+                    { label: 'Gross Profit', data: [5.8, 6.2, 4.9, 2.6, 7.0, 7.6, 8.0, 9.0, 14.0, 15.6], backgroundColor: '#22c55e', order: 1 },
+                    { label: 'Operating Income', type: 'line', data: [-1.3, -0.8, -2.3, -4.8, 0.1, 0.9, 0.8, 1.7, 10.5, 13.6], borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, order: 0 }
+                ]
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#e2e8f0' } }
-                }
-            }
+            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
         });
         
-        // Margin Chart
-        const marginCtx = document.getElementById('marginChart').getContext('2d');
-        new Chart(marginCtx, {
+        new Chart(document.getElementById('marginChart'), {
             type: 'line',
             data: {
                 labels: ['Q1 24', 'Q2', 'Q3', 'Q4', 'Q1 25', 'Q2', 'Q3', 'Q4', 'Jan 26', 'Feb'],
-                datasets: [{
-                    label: 'Gross Margin',
-                    data: [52.5, 50.8, 40.5, 21.1, 55.3, 56.2, 57.9, 52.3, 79.4, 87.1],
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }, {
-                    label: 'Operating Margin',
-                    data: [-11.7, -6.5, -19.5, -39.3, 0.5, 6.8, 5.7, 10.0, 59.5, 75.9],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
+                datasets: [
+                    { label: 'Gross Margin', data: [52.5, 50.8, 40.5, 21.1, 55.3, 56.2, 57.9, 52.3, 79.4, 87.1], borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.3 },
+                    { label: 'Operating Margin', data: [-11.7, -6.5, -19.5, -39.3, 0.5, 6.8, 5.7, 10.0, 59.5, 75.9], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }
+                ]
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        ticks: { color: '#94a3b8', callback: v => v + '%' },
-                        grid: { color: '#334155' }
-                    },
-                    x: {
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#e2e8f0' } }
-                }
-            }
+            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
         });
     </script>
-<script>function toggleSidebar() { document.getElementById("sidebar").classList.toggle("collapsed"); document.getElementById("main").classList.toggle("expanded"); document.querySelector(".sidebar-toggle").classList.toggle("open"); }</script>
 </body>
 </html>
