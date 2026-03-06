@@ -14,7 +14,11 @@
             min-height: 100vh;
         }
         
-        .sidebar {
+        .sidebar { transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .sidebar-toggle { position: fixed; top: 16px; left: 16px; z-index: 101; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 18px; transition: left 0.3s; }
+        .sidebar-toggle.open { left: 256px; }
+        .sidebar-old {
             width: 240px;
             background: #0c1222;
             border-right: 1px solid #1e293b;
@@ -74,7 +78,9 @@
             text-align: center;
         }
         
-        .main {
+        .main { transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        .main-old {
             margin-left: 240px;
             flex: 1;
             padding: 24px;
@@ -236,7 +242,8 @@
     </style>
 </head>
 <body>
-    <nav class="sidebar">
+    <button class="sidebar-toggle open" onclick="toggleSidebar()">☰</button>
+    <nav class="sidebar" id="sidebar">
         <div class="logo">
             <span class="bolt">⚡</span> Telnyx FP&A
         </div>
@@ -300,7 +307,7 @@
         </div>
     </nav>
     
-    <main class="main">
+    <main class="main" id="main">
         <div class="header">
             <div>
                 <h1>Data Connections</h1>
@@ -462,5 +469,6 @@
             </div>
         </div>
     </main>
+<script>function toggleSidebar() { document.getElementById("sidebar").classList.toggle("collapsed"); document.getElementById("main").classList.toggle("expanded"); document.querySelector(".sidebar-toggle").classList.toggle("open"); }</script>
 </body>
 </html>

@@ -3,74 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telnyx FP&A Dashboard</title>
+    <title>Revenue Overview - Telnyx FP&A</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            padding: 24px;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #334155;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .sidebar-toggle { position: fixed; top: 16px; left: 16px; z-index: 101; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 18px; transition: left 0.3s; }
+        .sidebar-toggle.open { left: 256px; }
+        
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .updated { padding: 0 20px 20px; font-size: 12px; color: #64748b; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+        
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
         h1 { font-size: 24px; font-weight: 600; }
         .subtitle { color: #94a3b8; font-size: 14px; }
-        .updated { color: #64748b; font-size: 12px; }
         
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .kpi-card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #334155;
-        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
         .kpi-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
         .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f8fafc; }
         .kpi-change { font-size: 14px; margin-top: 4px; }
         .kpi-change.positive { color: #4ade80; }
-        .kpi-change.negative { color: #f87171; }
         
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-        @media (max-width: 900px) {
-            .charts-grid { grid-template-columns: 1fr; }
-        }
-        .chart-card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid #334155;
-        }
-        .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 32px; }
+        @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: right;
-            border-bottom: 1px solid #334155;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
         th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 11px; }
         th:first-child, td:first-child { text-align: left; }
         tr:hover { background: #334155; }
@@ -79,168 +53,132 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <h1>Telnyx FP&A Dashboard</h1>
-            <div class="subtitle">Revenue by Type • Source: Postgres (mission_control_monthly_revenue)</div>
+    <button class="sidebar-toggle open" onclick="toggleSidebar()">☰</button>
+    
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <div class="updated">Updated: Mar 6, 2026</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">📊</span> Dashboard</a>
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="dashboard.html" class="nav-item active"><span class="nav-icon">💰</span> Overview</a>
+            <a href="revenue_segment.html" class="nav-item"><span class="nav-icon">📦</span> By Segment</a>
+            <a href="revenue_product.html" class="nav-item"><span class="nav-icon">🏷️</span> By Product</a>
+            <a href="revenue_region.html" class="nav-item"><span class="nav-icon">🌍</span> By Region</a>
+            <a href="#" class="nav-item"><span class="nav-icon">📈</span> Drivers</a>
         </div>
-        <div class="updated">Updated: March 6, 2026</div>
-    </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Financials</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Planning</div>
+            <a href="headcount.html" class="nav-item"><span class="nav-icon">👥</span> Headcount</a>
+            <a href="#" class="nav-item"><span class="nav-icon">🔄</span> Scenarios</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections<span style="margin-left:auto;color:#4ade80;font-size:12px;">3/3</span></a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main" id="main">
+        <div class="header">
+            <div>
+                <h1>Revenue Overview</h1>
+                <div class="subtitle">Revenue by Type • Source: Postgres (mission_control_monthly_revenue)</div>
+            </div>
+        </div>
 
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label">2025 Total Revenue</div>
-            <div class="kpi-value">$172.6M</div>
-            <div class="kpi-change positive">Base: 90% • Variable: 10%</div>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">2025 Total Revenue</div>
+                <div class="kpi-value">$172.6M</div>
+                <div class="kpi-change positive">Base: 90% • Variable: 10%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">2026 YTD Revenue</div>
+                <div class="kpi-value">$40.4M</div>
+                <div class="kpi-change positive">↑ 7.8% YoY</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Jan 2026</div>
+                <div class="kpi-value">$17.6M</div>
+                <div class="kpi-change positive">↑ 39.9% vs Jan 2025</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Feb 2026</div>
+                <div class="kpi-value">$17.9M</div>
+                <div class="kpi-change positive">↑ 54.9% vs Feb 2025</div>
+            </div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">2026 YTD Revenue</div>
-            <div class="kpi-value">$40.4M</div>
-            <div class="kpi-change positive">↑ 7.8% YoY</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Jan 2026</div>
-            <div class="kpi-value">$17.6M</div>
-            <div class="kpi-change positive">↑ 39.9% vs Jan 2025</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Feb 2026</div>
-            <div class="kpi-value">$17.9M</div>
-            <div class="kpi-change positive">↑ 54.9% vs Feb 2025</div>
-        </div>
-    </div>
 
-    <div class="charts-grid">
-        <div class="chart-card">
-            <div class="chart-title">Monthly Revenue Trend</div>
-            <canvas id="revenueChart"></canvas>
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">Monthly Revenue Trend</div>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">Revenue Mix (2024)</div>
+                <canvas id="mixChart"></canvas>
+            </div>
         </div>
-        <div class="chart-card">
-            <div class="chart-title">Revenue Mix (2024)</div>
-            <canvas id="mixChart"></canvas>
-        </div>
-    </div>
 
-    <div class="chart-card">
-        <div class="chart-title">Monthly Revenue Detail</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Month</th>
-                    <th>Base</th>
-                    <th>Variable</th>
-                    <th>Political</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>Jan 2024</td><td>$9,641,851</td><td>$1,427,371</td><td>$0</td><td>$11,069,222</td></tr>
-                <tr><td>Feb 2024</td><td>$9,954,072</td><td>$1,682,667</td><td>$0</td><td>$11,636,739</td></tr>
-                <tr><td>Mar 2024</td><td>$10,334,340</td><td>$2,003,699</td><td>$0</td><td>$12,338,039</td></tr>
-                <tr><td>Apr 2024</td><td>$10,535,841</td><td>$1,752,024</td><td>$0</td><td>$12,287,865</td></tr>
-                <tr><td>May 2024</td><td>$10,723,116</td><td>$1,574,135</td><td>$0</td><td>$12,297,251</td></tr>
-                <tr><td>Jun 2024</td><td>$10,552,970</td><td>$1,425,298</td><td>$0</td><td>$11,978,268</td></tr>
-                <tr><td>Jul 2024</td><td>$10,661,078</td><td>$1,462,666</td><td>$0</td><td>$12,123,744</td></tr>
-                <tr><td>Aug 2024</td><td>$10,769,698</td><td>$1,410,399</td><td>$0</td><td>$12,180,097</td></tr>
-                <tr><td>Sep 2024</td><td>$10,827,855</td><td>$1,367,952</td><td>$0</td><td>$12,195,807</td></tr>
-                <tr><td>Oct 2024</td><td>$10,918,893</td><td>$1,500,668</td><td>$19,050</td><td>$12,438,611</td></tr>
-                <tr><td>Nov 2024</td><td>$10,826,232</td><td>$1,474,566</td><td>$212,082</td><td>$12,512,880</td></tr>
-                <tr><td>Dec 2024</td><td>$10,798,553</td><td>$1,414,839</td><td>$0</td><td>$12,213,392</td></tr>
-                <tr class="total-row"><td>2024 Total</td><td>$126,544,499</td><td>$18,496,284</td><td>$231,132</td><td>$145,271,915</td></tr>
-                <tr><td>Jan 2025</td><td>$11,150,106</td><td>$1,441,185</td><td>$0</td><td>$12,591,292</td></tr>
-                <tr><td>Feb 2025</td><td>$10,397,459</td><td>$1,179,751</td><td>$0</td><td>$11,577,210</td></tr>
-                <tr><td>Mar 2025</td><td>$11,888,507</td><td>$1,449,236</td><td>$0</td><td>$13,337,743</td></tr>
-                <tr><td>Apr 2025</td><td>$11,851,348</td><td>$1,619,050</td><td>$0</td><td>$13,470,397</td></tr>
-                <tr><td>May 2025</td><td>$11,965,529</td><td>$1,382,806</td><td>$0</td><td>$13,348,335</td></tr>
-                <tr><td>Jun 2025</td><td>$12,302,397</td><td>$1,191,316</td><td>$0</td><td>$13,493,714</td></tr>
-                <tr><td>Jul 2025</td><td>$12,530,246</td><td>$1,312,875</td><td>$0</td><td>$13,843,121</td></tr>
-                <tr><td>Aug 2025</td><td>$12,948,850</td><td>$1,320,749</td><td>$0</td><td>$14,269,599</td></tr>
-                <tr><td>Sep 2025</td><td>$14,043,027</td><td>$1,516,293</td><td>$0</td><td>$15,559,320</td></tr>
-                <tr><td>Oct 2025</td><td>$15,685,640</td><td>$1,485,051</td><td>$0</td><td>$17,170,691</td></tr>
-                <tr><td>Nov 2025</td><td>$14,919,696</td><td>$1,510,906</td><td>$0</td><td>$16,430,602</td></tr>
-                <tr><td>Dec 2025</td><td>$15,590,035</td><td>$1,891,598</td><td>$0</td><td>$17,481,634</td></tr>
-                <tr class="total-row"><td>2025 Total</td><td>$155,272,841</td><td>$17,300,817</td><td>$0</td><td>$172,573,658</td></tr>
-                <tr><td>Jan 2026</td><td>$16,242,254</td><td>$1,369,504</td><td>$0</td><td>$17,611,758</td></tr>
-                <tr><td>Feb 2026</td><td>$16,386,414</td><td>$1,550,137</td><td>$0</td><td>$17,936,551</td></tr>
-                <tr><td>Mar 2026 (partial)</td><td>$4,646,301</td><td>$232,595</td><td>$0</td><td>$4,878,896</td></tr>
-                <tr class="total-row"><td>2026 YTD</td><td>$37,274,969</td><td>$3,152,236</td><td>$0</td><td>$40,427,205</td></tr>
-            </tbody>
-        </table>
-    </div>
+        <div class="card">
+            <div class="card-title">Monthly Revenue Detail</div>
+            <table>
+                <thead>
+                    <tr><th>Month</th><th>Base</th><th>Variable</th><th>Political</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Jan 2025</td><td>$11,150,106</td><td>$1,441,185</td><td>$0</td><td>$12,591,292</td></tr>
+                    <tr><td>Feb 2025</td><td>$10,397,459</td><td>$1,179,751</td><td>$0</td><td>$11,577,210</td></tr>
+                    <tr><td>Mar 2025</td><td>$11,888,507</td><td>$1,449,236</td><td>$0</td><td>$13,337,743</td></tr>
+                    <tr><td>Apr 2025</td><td>$11,851,348</td><td>$1,619,050</td><td>$0</td><td>$13,470,397</td></tr>
+                    <tr><td>May 2025</td><td>$11,965,529</td><td>$1,382,806</td><td>$0</td><td>$13,348,335</td></tr>
+                    <tr><td>Jun 2025</td><td>$12,302,397</td><td>$1,191,316</td><td>$0</td><td>$13,493,714</td></tr>
+                    <tr><td>Jul 2025</td><td>$12,530,246</td><td>$1,312,875</td><td>$0</td><td>$13,843,121</td></tr>
+                    <tr><td>Aug 2025</td><td>$12,948,850</td><td>$1,320,749</td><td>$0</td><td>$14,269,599</td></tr>
+                    <tr><td>Sep 2025</td><td>$14,043,027</td><td>$1,516,293</td><td>$0</td><td>$15,559,320</td></tr>
+                    <tr><td>Oct 2025</td><td>$15,685,640</td><td>$1,485,051</td><td>$0</td><td>$17,170,691</td></tr>
+                    <tr><td>Nov 2025</td><td>$14,919,696</td><td>$1,510,906</td><td>$0</td><td>$16,430,602</td></tr>
+                    <tr><td>Dec 2025</td><td>$15,590,035</td><td>$1,891,598</td><td>$0</td><td>$17,481,634</td></tr>
+                    <tr class="total-row"><td>2025 Total</td><td>$155,272,841</td><td>$17,300,817</td><td>$0</td><td>$172,573,658</td></tr>
+                    <tr><td>Jan 2026</td><td>$16,242,254</td><td>$1,369,504</td><td>$0</td><td>$17,611,758</td></tr>
+                    <tr><td>Feb 2026</td><td>$16,386,414</td><td>$1,550,137</td><td>$0</td><td>$17,936,551</td></tr>
+                    <tr class="total-row"><td>2026 YTD</td><td>$37,274,969</td><td>$3,152,236</td><td>$0</td><td>$40,427,205</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
     <script>
-        // Revenue trend chart
-        const ctx1 = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctx1, {
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+            document.querySelector('.sidebar-toggle').classList.toggle('open');
+        }
+        
+        new Chart(document.getElementById('revenueChart'), {
             type: 'bar',
             data: {
-                labels: ['Jan 24', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-                         'Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-                         'Jan 26', 'Feb', 'Mar*'],
+                labels: ['Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan 26', 'Feb'],
                 datasets: [{
-                    label: 'Base',
-                    data: [9.64, 9.95, 10.33, 10.54, 10.72, 10.55, 10.66, 10.77, 10.83, 10.92, 10.83, 10.80,
-                           11.15, 10.40, 11.89, 11.85, 11.97, 12.30, 12.53, 12.95, 14.04, 15.69, 14.92, 15.59,
-                           16.24, 16.39, 4.65],
-                    backgroundColor: '#3b82f6',
-                    stack: 'stack0'
+                    label: 'Base', data: [11.15, 10.40, 11.89, 11.85, 11.97, 12.30, 12.53, 12.95, 14.04, 15.69, 14.92, 15.59, 16.24, 16.39], backgroundColor: '#3b82f6', stack: 'stack0'
                 }, {
-                    label: 'Variable',
-                    data: [1.43, 1.68, 2.00, 1.75, 1.57, 1.43, 1.46, 1.41, 1.37, 1.50, 1.47, 1.41,
-                           1.44, 1.18, 1.45, 1.62, 1.38, 1.19, 1.31, 1.32, 1.52, 1.49, 1.51, 1.89,
-                           1.37, 1.55, 0.23],
-                    backgroundColor: '#8b5cf6',
-                    stack: 'stack0'
-                }, {
-                    label: 'Political',
-                    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.21, 0,
-                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                           0, 0, 0],
-                    backgroundColor: '#f97316',
-                    stack: 'stack0'
+                    label: 'Variable', data: [1.44, 1.18, 1.45, 1.62, 1.38, 1.19, 1.31, 1.32, 1.52, 1.49, 1.51, 1.89, 1.37, 1.55], backgroundColor: '#8b5cf6', stack: 'stack0'
                 }]
             },
-            options: {
-                responsive: true,
-                scales: {
-                    x: { 
-                        stacked: true,
-                        ticks: { color: '#94a3b8' },
-                        grid: { color: '#334155' }
-                    },
-                    y: { 
-                        stacked: true,
-                        ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' },
-                        grid: { color: '#334155' }
-                    }
-                },
-                plugins: {
-                    legend: { labels: { color: '#e2e8f0' } }
-                }
-            }
+            options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
         });
 
-        // Revenue mix donut
-        const ctx2 = document.getElementById('mixChart').getContext('2d');
-        new Chart(ctx2, {
+        new Chart(document.getElementById('mixChart'), {
             type: 'doughnut',
-            data: {
-                labels: ['Base Revenue', 'Variable Revenue', 'Political Revenue'],
-                datasets: [{
-                    data: [126.54, 18.50, 0.23],
-                    backgroundColor: ['#3b82f6', '#8b5cf6', '#f97316'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { 
-                        position: 'bottom',
-                        labels: { color: '#e2e8f0', padding: 20 }
-                    }
-                }
-            }
+            data: { labels: ['Base Revenue', 'Variable Revenue'], datasets: [{ data: [155.27, 17.30], backgroundColor: ['#3b82f6', '#8b5cf6'], borderWidth: 0 }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', padding: 20 } } } }
         });
     </script>
 </body>
