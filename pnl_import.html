@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&L Import - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .source-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; }
+        .source-card.connected { border-color: #22c55e; }
+        .source-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .source-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 500; }
+        .status-badge.connected { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .status-badge.disconnected { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+        .source-meta { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+        .source-actions { display: flex; gap: 8px; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        .btn-secondary:hover { background: #475569; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        tr:hover { background: #0f172a; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-dot.success { background: #4ade80; }
+        .status-dot.pending { background: #facc15; }
+        .status-dot.error { background: #f87171; }
+        
+        .import-actions { display: flex; gap: 12px; margin-bottom: 24px; }
+        .progress-bar { height: 4px; background: #334155; border-radius: 2px; overflow: hidden; margin-top: 12px; }
+        .progress-fill { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s; }
+        
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+        .alert-info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd; }
+        .alert-success { background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: #86efac; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item active"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> Mapping</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>P&L Import</h1>
+                <div class="subtitle">Import actuals from connected data sources</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            💡 Import pulls the latest P&L data from Campfire and revenue details from the Data Warehouse.
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📡 Data Sources</div>
+            <div class="source-grid">
+                <div class="source-card connected">
+                    <div class="source-header">
+                        <div class="source-name">🔥 Campfire ERP</div>
+                        <span class="status-badge connected">Connected</span>
+                    </div>
+                    <div class="source-meta">
+                        Last sync: Mar 6, 2026 at 3:59 PM<br>
+                        Records: 2,847 GL entries
+                    </div>
+                    <div class="source-actions">
+                        <button class="btn btn-primary" onclick="importCampfire()">Import Now</button>
+                        <button class="btn btn-secondary">View Logs</button>
+                    </div>
+                </div>
+                
+                <div class="source-card connected">
+                    <div class="source-header">
+                        <div class="source-name">🐘 Data Warehouse</div>
+                        <span class="status-badge connected">Connected</span>
+                    </div>
+                    <div class="source-meta">
+                        Last sync: Mar 6, 2026 at 10:52 AM<br>
+                        Tables: revenue_by_type, monthly_revenue
+                    </div>
+                    <div class="source-actions">
+                        <button class="btn btn-primary" onclick="importPostgres()">Import Now</button>
+                        <button class="btn btn-secondary">View Logs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="import-actions">
+            <button class="btn btn-success" onclick="importAll()">🔄 Import All Sources</button>
+            <button class="btn btn-secondary">📅 Schedule Import</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Import History</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Source</th>
+                        <th>Period</th>
+                        <th>Records</th>
+                        <th>Duration</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="importHistory">
+                    <tr>
+                        <td><span class="status-dot success"></span>Success</td>
+                        <td>Campfire</td>
+                        <td>Feb 2026</td>
+                        <td>847</td>
+                        <td>2.3s</td>
+                        <td>Mar 6, 2026 3:59 PM</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-dot success"></span>Success</td>
+                        <td>Data Warehouse</td>
+                        <td>Feb 2026</td>
+                        <td>156</td>
+                        <td>1.1s</td>
+                        <td>Mar 6, 2026 10:52 AM</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-dot success"></span>Success</td>
+                        <td>Campfire</td>
+                        <td>Jan 2026</td>
+                        <td>823</td>
+                        <td>2.1s</td>
+                        <td>Feb 5, 2026 4:12 PM</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-dot success"></span>Success</td>
+                        <td>Data Warehouse</td>
+                        <td>Jan 2026</td>
+                        <td>148</td>
+                        <td>0.9s</td>
+                        <td>Feb 5, 2026 10:30 AM</td>
+                    </tr>
+                    <tr>
+                        <td><span class="status-dot success"></span>Success</td>
+                        <td>Campfire</td>
+                        <td>Dec 2025</td>
+                        <td>912</td>
+                        <td>2.4s</td>
+                        <td>Jan 6, 2026 3:45 PM</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card" id="importProgress" style="display: none;">
+            <div class="card-title">🔄 Import in Progress</div>
+            <div id="progressText">Connecting to Campfire...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        async function importAll() {
+            await importCampfire();
+            await importPostgres();
+        }
+        
+        async function importCampfire() {
+            showProgress('Importing from Campfire...');
+            await simulateImport(100);
+            addHistoryRow('Campfire', 'Mar 2026', 891, 2.1);
+            hideProgress();
+        }
+        
+        async function importPostgres() {
+            showProgress('Importing from Data Warehouse...');
+            await simulateImport(60);
+            addHistoryRow('Data Warehouse', 'Mar 2026', 162, 1.0);
+            hideProgress();
+        }
+        
+        function showProgress(text) {
+            document.getElementById('importProgress').style.display = 'block';
+            document.getElementById('progressText').textContent = text;
+            document.getElementById('progressFill').style.width = '0%';
+        }
+        
+        function hideProgress() {
+            document.getElementById('importProgress').style.display = 'none';
+        }
+        
+        async function simulateImport(steps) {
+            for (let i = 0; i <= 100; i += 100/steps) {
+                document.getElementById('progressFill').style.width = i + '%';
+                await new Promise(r => setTimeout(r, 20));
+            }
+        }
+        
+        function addHistoryRow(source, period, records, duration) {
+            const tbody = document.getElementById('importHistory');
+            const now = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span class="status-dot success"></span>Success</td>
+                <td>${source}</td>
+                <td>${period}</td>
+                <td>${records}</td>
+                <td>${duration}s</td>
+                <td>${now}</td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+        }
+    </script>
+</body>
+</html>

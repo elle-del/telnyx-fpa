@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&L Drivers - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        .btn-secondary:hover { background: #475569; }
+        
+        .drivers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        
+        .driver-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 20px; }
+        .driver-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .driver-name { font-weight: 600; font-size: 14px; }
+        .driver-type { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        
+        .driver-inputs { display: grid; gap: 12px; }
+        .input-row { display: flex; align-items: center; gap: 12px; }
+        .input-label { flex: 1; font-size: 12px; color: #94a3b8; }
+        .input-field { width: 100px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 6px 10px; color: #e2e8f0; font-size: 13px; text-align: right; }
+        .input-field:focus { outline: none; border-color: #3b82f6; }
+        .input-unit { font-size: 11px; color: #64748b; width: 30px; }
+        
+        .driver-output { margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155; }
+        .output-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+        .output-label { color: #94a3b8; }
+        .output-value { font-weight: 600; color: #4ade80; }
+        
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-row { grid-template-columns: 1fr; } }
+        
+        .formula-display { background: #0f172a; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 12px; }
+        .formula-display code { color: #a78bfa; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .positive { color: #4ade80; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> Mapping</a>
+            <a href="pnl_drivers.html" class="nav-item active"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Revenue Drivers</h1>
+                <div class="subtitle">Configure assumptions and growth drivers for forecasting</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary">Reset to Defaults</button>
+                <button class="btn btn-primary" onclick="saveDrivers()">Save Drivers</button>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="card">
+                <div class="card-title">📈 Revenue Growth Projection</div>
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">📊 Revenue Mix</div>
+                <canvas id="mixChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">⚡ Revenue Drivers</div>
+            <div class="drivers-grid">
+                <div class="driver-card">
+                    <div class="driver-header">
+                        <span class="driver-name">📞 Voice Revenue</span>
+                        <span class="driver-type">Volume × Rate</span>
+                    </div>
+                    <div class="driver-inputs">
+                        <div class="input-row">
+                            <span class="input-label">Monthly Minutes (M)</span>
+                            <input type="number" class="input-field" value="2850" id="voiceMinutes" onchange="recalculate()">
+                            <span class="input-unit">M</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">Avg Rate per Minute</span>
+                            <input type="number" class="input-field" value="0.0085" step="0.0001" id="voiceRate" onchange="recalculate()">
+                            <span class="input-unit">$</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">YoY Growth Rate</span>
+                            <input type="number" class="input-field" value="12" id="voiceGrowth" onchange="recalculate()">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="driver-output">
+                        <div class="output-row">
+                            <span class="output-label">Monthly Revenue</span>
+                            <span class="output-value" id="voiceMonthly">$24.2M</span>
+                        </div>
+                        <div class="output-row">
+                            <span class="output-label">Annual Revenue</span>
+                            <span class="output-value" id="voiceAnnual">$290.7M</span>
+                        </div>
+                    </div>
+                    <div class="formula-display">
+                        <code>minutes × rate × 12 × (1 + growth)</code>
+                    </div>
+                </div>
+                
+                <div class="driver-card">
+                    <div class="driver-header">
+                        <span class="driver-name">💬 Messaging Revenue</span>
+                        <span class="driver-type">Volume × Rate</span>
+                    </div>
+                    <div class="driver-inputs">
+                        <div class="input-row">
+                            <span class="input-label">Monthly Messages (M)</span>
+                            <input type="number" class="input-field" value="890" id="msgVolume" onchange="recalculate()">
+                            <span class="input-unit">M</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">Avg Rate per Message</span>
+                            <input type="number" class="input-field" value="0.0075" step="0.0001" id="msgRate" onchange="recalculate()">
+                            <span class="input-unit">$</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">YoY Growth Rate</span>
+                            <input type="number" class="input-field" value="18" id="msgGrowth" onchange="recalculate()">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="driver-output">
+                        <div class="output-row">
+                            <span class="output-label">Monthly Revenue</span>
+                            <span class="output-value" id="msgMonthly">$6.7M</span>
+                        </div>
+                        <div class="output-row">
+                            <span class="output-label">Annual Revenue</span>
+                            <span class="output-value" id="msgAnnual">$94.5M</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="driver-card">
+                    <div class="driver-header">
+                        <span class="driver-name">📱 Numbers Revenue</span>
+                        <span class="driver-type">Subscribers × ARPU</span>
+                    </div>
+                    <div class="driver-inputs">
+                        <div class="input-row">
+                            <span class="input-label">Active Numbers (K)</span>
+                            <input type="number" class="input-field" value="1250" id="numbersCount" onchange="recalculate()">
+                            <span class="input-unit">K</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">Monthly ARPU</span>
+                            <input type="number" class="input-field" value="2.85" step="0.01" id="numbersArpu" onchange="recalculate()">
+                            <span class="input-unit">$</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">Net Adds per Month</span>
+                            <input type="number" class="input-field" value="45" id="numbersAdds" onchange="recalculate()">
+                            <span class="input-unit">K</span>
+                        </div>
+                    </div>
+                    <div class="driver-output">
+                        <div class="output-row">
+                            <span class="output-label">Monthly Revenue</span>
+                            <span class="output-value" id="numbersMonthly">$3.6M</span>
+                        </div>
+                        <div class="output-row">
+                            <span class="output-label">Annual Revenue</span>
+                            <span class="output-value" id="numbersAnnual">$48.2M</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="driver-card">
+                    <div class="driver-header">
+                        <span class="driver-name">🤖 AI Services Revenue</span>
+                        <span class="driver-type">Tokens × Rate</span>
+                    </div>
+                    <div class="driver-inputs">
+                        <div class="input-row">
+                            <span class="input-label">Monthly Tokens (B)</span>
+                            <input type="number" class="input-field" value="45" id="aiTokens" onchange="recalculate()">
+                            <span class="input-unit">B</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">Rate per 1M Tokens</span>
+                            <input type="number" class="input-field" value="0.15" step="0.01" id="aiRate" onchange="recalculate()">
+                            <span class="input-unit">$</span>
+                        </div>
+                        <div class="input-row">
+                            <span class="input-label">YoY Growth Rate</span>
+                            <input type="number" class="input-field" value="85" id="aiGrowth" onchange="recalculate()">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="driver-output">
+                        <div class="output-row">
+                            <span class="output-label">Monthly Revenue</span>
+                            <span class="output-value" id="aiMonthly">$6.8M</span>
+                        </div>
+                        <div class="output-row">
+                            <span class="output-label">Annual Revenue</span>
+                            <span class="output-value" id="aiAnnual">$148.8M</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Driver Summary</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Revenue Stream</th>
+                        <th>2025 Actual</th>
+                        <th>2026 Forecast</th>
+                        <th>Growth</th>
+                        <th>% of Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Voice</td>
+                        <td>$45.2M</td>
+                        <td id="voiceForecast">$50.7M</td>
+                        <td class="positive">+12.0%</td>
+                        <td>26%</td>
+                    </tr>
+                    <tr>
+                        <td>Messaging</td>
+                        <td>$38.1M</td>
+                        <td id="msgForecast">$45.0M</td>
+                        <td class="positive">+18.0%</td>
+                        <td>23%</td>
+                    </tr>
+                    <tr>
+                        <td>Numbers</td>
+                        <td>$28.9M</td>
+                        <td id="numbersForecast">$32.1M</td>
+                        <td class="positive">+11.0%</td>
+                        <td>16%</td>
+                    </tr>
+                    <tr>
+                        <td>AI Services</td>
+                        <td>$12.4M</td>
+                        <td id="aiForecast">$22.9M</td>
+                        <td class="positive">+85.0%</td>
+                        <td>12%</td>
+                    </tr>
+                    <tr>
+                        <td>Other</td>
+                        <td>$48.0M</td>
+                        <td>$52.3M</td>
+                        <td class="positive">+9.0%</td>
+                        <td>23%</td>
+                    </tr>
+                    <tr style="font-weight: 700; background: #0f172a;">
+                        <td>Total Revenue</td>
+                        <td>$172.6M</td>
+                        <td id="totalForecast">$203.0M</td>
+                        <td class="positive">+17.6%</td>
+                        <td>100%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <script>
+        const growthChart = new Chart(document.getElementById('growthChart'), {
+            type: 'line',
+            data: {
+                labels: ['Q1 25', 'Q2', 'Q3', 'Q4', 'Q1 26', 'Q2', 'Q3', 'Q4'],
+                datasets: [{
+                    label: 'Actual',
+                    data: [38.2, 41.5, 43.8, 49.1, 35.5, null, null, null],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Forecast',
+                    data: [null, null, null, null, 35.5, 48.2, 52.1, 58.4],
+                    borderColor: '#22c55e',
+                    borderDash: [5, 5],
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+        
+        const mixChart = new Chart(document.getElementById('mixChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Voice', 'Messaging', 'Numbers', 'AI Services', 'Other'],
+                datasets: [{
+                    data: [26, 23, 16, 12, 23],
+                    backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } }
+            }
+        });
+        
+        function recalculate() {
+            // Voice
+            const voiceMin = parseFloat(document.getElementById('voiceMinutes').value) || 0;
+            const voiceRate = parseFloat(document.getElementById('voiceRate').value) || 0;
+            const voiceGrowth = parseFloat(document.getElementById('voiceGrowth').value) || 0;
+            const voiceMonthly = voiceMin * voiceRate;
+            const voiceAnnual = voiceMonthly * 12 * (1 + voiceGrowth/100);
+            document.getElementById('voiceMonthly').textContent = '$' + (voiceMonthly).toFixed(1) + 'M';
+            document.getElementById('voiceAnnual').textContent = '$' + (voiceAnnual).toFixed(1) + 'M';
+            
+            // Messaging
+            const msgVol = parseFloat(document.getElementById('msgVolume').value) || 0;
+            const msgRate = parseFloat(document.getElementById('msgRate').value) || 0;
+            const msgGrowth = parseFloat(document.getElementById('msgGrowth').value) || 0;
+            const msgMonthly = msgVol * msgRate;
+            const msgAnnual = msgMonthly * 12 * (1 + msgGrowth/100);
+            document.getElementById('msgMonthly').textContent = '$' + (msgMonthly).toFixed(1) + 'M';
+            document.getElementById('msgAnnual').textContent = '$' + (msgAnnual).toFixed(1) + 'M';
+            
+            // Numbers
+            const numCount = parseFloat(document.getElementById('numbersCount').value) || 0;
+            const numArpu = parseFloat(document.getElementById('numbersArpu').value) || 0;
+            const numAdds = parseFloat(document.getElementById('numbersAdds').value) || 0;
+            const numMonthly = (numCount * numArpu) / 1000;
+            const avgNumbers = numCount + (numAdds * 6);
+            const numAnnual = (avgNumbers * numArpu * 12) / 1000;
+            document.getElementById('numbersMonthly').textContent = '$' + (numMonthly).toFixed(1) + 'M';
+            document.getElementById('numbersAnnual').textContent = '$' + (numAnnual).toFixed(1) + 'M';
+            
+            // AI
+            const aiTokens = parseFloat(document.getElementById('aiTokens').value) || 0;
+            const aiRate = parseFloat(document.getElementById('aiRate').value) || 0;
+            const aiGrowth = parseFloat(document.getElementById('aiGrowth').value) || 0;
+            const aiMonthly = (aiTokens * 1000 * aiRate) / 1000;
+            const aiAnnual = aiMonthly * 12 * (1 + aiGrowth/100);
+            document.getElementById('aiMonthly').textContent = '$' + (aiMonthly).toFixed(1) + 'M';
+            document.getElementById('aiAnnual').textContent = '$' + (aiAnnual).toFixed(1) + 'M';
+        }
+        
+        function saveDrivers() {
+            alert('Drivers saved successfully! Forecasts will be updated.');
+        }
+    </script>
+</body>
+</html>
