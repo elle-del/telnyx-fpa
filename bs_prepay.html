@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prepayments - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+        .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid #334155; }
+        .tab { padding: 10px 20px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .tab:hover { color: #e2e8f0; }
+        .tab.active { color: #f8fafc; border-color: #3b82f6; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .total-row { font-weight: 700; background: #0f172a; }
+        
+        .progress-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #3b82f6; }
+        
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+        .badge-current { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-lt { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item active"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Prepayments & Accrued Income</h1>
+                <div class="subtitle">Prepaid expenses and accrued income schedules • Feb 2026</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary">+ Add Entry</button>
+                <button class="btn btn-primary">Run Amortization</button>
+            </div>
+        </div>
+        
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Prepaid Expenses</div>
+                <div class="kpi-value">$3.46M</div>
+                <div class="kpi-sub">87 items</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Accrued Income</div>
+                <div class="kpi-value">$1.23M</div>
+                <div class="kpi-sub">34 items</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Mar Amortization</div>
+                <div class="kpi-value">$456K</div>
+                <div class="kpi-sub">Scheduled release</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Avg Remaining Life</div>
+                <div class="kpi-value">5.2 mo</div>
+                <div class="kpi-sub">Weighted avg</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active">Prepaid Expenses</div>
+            <div class="tab">Accrued Income</div>
+            <div class="tab">Amortization Schedule</div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>📝 Prepaid Expenses Schedule</span>
+                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📥 Export</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Vendor</th>
+                        <th>Type</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Original</th>
+                        <th>Balance</th>
+                        <th>% Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Annual Software License - Salesforce</td>
+                        <td>Salesforce</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Jan 26</td>
+                        <td>Dec 26</td>
+                        <td>$892,000</td>
+                        <td>$743,333</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 17%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Insurance - D&O</td>
+                        <td>AIG</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Oct 25</td>
+                        <td>Sep 26</td>
+                        <td>$456,000</td>
+                        <td>$228,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Annual Software License - Workday</td>
+                        <td>Workday</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Feb 26</td>
+                        <td>Jan 27</td>
+                        <td>$678,000</td>
+                        <td>$621,500</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 8%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Data Center Lease - Prepaid</td>
+                        <td>Equinix</td>
+                        <td><span class="badge badge-lt">Long-term</span></td>
+                        <td>Jan 25</td>
+                        <td>Dec 27</td>
+                        <td>$1,200,000</td>
+                        <td>$700,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 42%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Conference Sponsorship - Enterprise Connect</td>
+                        <td>Informa</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Jan 26</td>
+                        <td>Mar 26</td>
+                        <td>$125,000</td>
+                        <td>$41,667</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 67%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Annual Support - Cisco</td>
+                        <td>Cisco</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Nov 25</td>
+                        <td>Oct 26</td>
+                        <td>$345,000</td>
+                        <td>$230,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 33%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Insurance - Cyber Liability</td>
+                        <td>Chubb</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Jul 25</td>
+                        <td>Jun 26</td>
+                        <td>$234,000</td>
+                        <td>$78,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 67%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Marketing Retainer</td>
+                        <td>Growth Agency</td>
+                        <td><span class="badge badge-current">Current</span></td>
+                        <td>Jan 26</td>
+                        <td>Jun 26</td>
+                        <td>$180,000</td>
+                        <td>$120,000</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 33%"></div></div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Other Prepaid (79 items)</td>
+                        <td>Various</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>$1,890,000</td>
+                        <td>$697,500</td>
+                        <td>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 63%"></div></div>
+                        </td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="5">Total Prepaid Expenses</td>
+                        <td>$6,000,000</td>
+                        <td>$3,460,000</td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

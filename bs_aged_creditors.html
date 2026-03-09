@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aged Creditors - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1200px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+        .kpi-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+        .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-row { grid-template-columns: 1fr; } }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .total-row { font-weight: 700; background: #0f172a; }
+        .negative { color: #f87171; }
+        .warning { color: #facc15; }
+        
+        .search-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+        .search-input { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px; color: #e2e8f0; font-size: 13px; }
+        .search-input:focus { outline: none; border-color: #3b82f6; }
+        
+        .aging-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .aging-bar span { height: 100%; }
+        .aging-current { background: #22c55e; }
+        .aging-30 { background: #3b82f6; }
+        .aging-60 { background: #f59e0b; }
+        .aging-90 { background: #f87171; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item active"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Aged Creditors (AP Aging)</h1>
+                <div class="subtitle">Accounts payable aging analysis • As of Feb 28, 2026</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary">📥 Export</button>
+                <button class="btn btn-primary">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Total AP</div>
+                <div class="kpi-value">$12.3M</div>
+                <div class="kpi-sub">892 vendors</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Current</div>
+                <div class="kpi-value" style="color: #4ade80;">$8.9M</div>
+                <div class="kpi-sub">72.4% of total</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">1-30 Days</div>
+                <div class="kpi-value" style="color: #3b82f6;">$2.1M</div>
+                <div class="kpi-sub">17.1% of total</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">31-60 Days</div>
+                <div class="kpi-value" style="color: #f59e0b;">$890K</div>
+                <div class="kpi-sub">7.2% of total</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">60+ Days</div>
+                <div class="kpi-value" style="color: #f87171;">$410K</div>
+                <div class="kpi-sub">3.3% of total</div>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="card">
+                <div class="card-title">📈 AP Aging Trend</div>
+                <canvas id="apTrendChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">📊 Aging Breakdown</div>
+                <canvas id="apPieChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Vendor Aging Detail</div>
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search vendors...">
+                <button class="btn btn-secondary">Filter by Due Date</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vendor</th>
+                        <th>Current</th>
+                        <th>1-30</th>
+                        <th>31-60</th>
+                        <th>61-90</th>
+                        <th>90+</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Twilio Inc</td>
+                        <td>$1,234,567</td>
+                        <td>$345,678</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$1,580,245</strong></td>
+                    </tr>
+                    <tr>
+                        <td>AWS</td>
+                        <td>$987,654</td>
+                        <td>$234,567</td>
+                        <td>$123,456</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$1,345,677</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Google Cloud</td>
+                        <td>$876,543</td>
+                        <td>$198,765</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$1,075,308</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Equinix</td>
+                        <td>$654,321</td>
+                        <td>$234,567</td>
+                        <td>$156,789</td>
+                        <td>$45,678</td>
+                        <td class="negative">$23,456</td>
+                        <td><strong>$1,114,811</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Bandwidth Inc</td>
+                        <td>$543,210</td>
+                        <td>$187,654</td>
+                        <td>$98,765</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$829,629</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Level 3 / Lumen</td>
+                        <td>$432,109</td>
+                        <td>$176,543</td>
+                        <td>$87,654</td>
+                        <td class="warning">$65,432</td>
+                        <td class="negative">$54,321</td>
+                        <td><strong>$816,059</strong></td>
+                    </tr>
+                    <tr>
+                        <td>CoreSite</td>
+                        <td>$398,765</td>
+                        <td>$123,456</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$522,221</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Digital Realty</td>
+                        <td>$345,678</td>
+                        <td>$98,765</td>
+                        <td>$76,543</td>
+                        <td>$0</td>
+                        <td>$0</td>
+                        <td><strong>$520,986</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Zayo Group</td>
+                        <td>$298,765</td>
+                        <td>$87,654</td>
+                        <td>$65,432</td>
+                        <td class="warning">$43,210</td>
+                        <td class="negative">$32,109</td>
+                        <td><strong>$527,170</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Other Vendors (883)</td>
+                        <td>$3,128,388</td>
+                        <td>$412,351</td>
+                        <td>$281,361</td>
+                        <td>$95,680</td>
+                        <td>$300,114</td>
+                        <td><strong>$4,217,894</strong></td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Total</td>
+                        <td>$8,900,000</td>
+                        <td>$2,100,000</td>
+                        <td>$890,000</td>
+                        <td>$250,000</td>
+                        <td>$160,000</td>
+                        <td><strong>$12,300,000</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <script>
+        new Chart(document.getElementById('apTrendChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+                datasets: [
+                    { label: 'Current', data: [7.8, 8.1, 8.5, 9.2, 8.7, 8.9], backgroundColor: '#22c55e' },
+                    { label: '1-30', data: [1.8, 1.9, 2.0, 2.3, 2.0, 2.1], backgroundColor: '#3b82f6' },
+                    { label: '31-60', data: [0.7, 0.8, 0.9, 1.0, 0.8, 0.89], backgroundColor: '#f59e0b' },
+                    { label: '60+', data: [0.3, 0.35, 0.4, 0.5, 0.45, 0.41], backgroundColor: '#f87171' }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+        
+        new Chart(document.getElementById('apPieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Current', '1-30 Days', '31-60 Days', '60+ Days'],
+                datasets: [{
+                    data: [72.4, 17.1, 7.2, 3.3],
+                    backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#f87171']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
+            }
+        });
+    </script>
+</body>
+</html>

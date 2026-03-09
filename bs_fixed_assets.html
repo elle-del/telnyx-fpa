@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Assets - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1200px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+        .kpi-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+        .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-row { grid-template-columns: 1fr; } }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .total-row { font-weight: 700; background: #0f172a; }
+        .negative { color: #f87171; }
+        
+        .search-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+        .search-input { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px 14px; color: #e2e8f0; font-size: 13px; }
+        .search-input:focus { outline: none; border-color: #3b82f6; }
+        
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .filter-tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; background: #0f172a; border: 1px solid #334155; color: #94a3b8; }
+        .filter-tab.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item active"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Fixed Assets Register</h1>
+                <div class="subtitle">Property, plant & equipment • Feb 2026</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary">📥 Export</button>
+                <button class="btn btn-secondary">Run Depreciation</button>
+                <button class="btn btn-primary">+ Add Asset</button>
+            </div>
+        </div>
+        
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Gross PP&E</div>
+                <div class="kpi-value">$45.7M</div>
+                <div class="kpi-sub">2,156 assets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Accum. Depreciation</div>
+                <div class="kpi-value" style="color: #f87171;">-$18.2M</div>
+                <div class="kpi-sub">40% depreciated</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Net PP&E</div>
+                <div class="kpi-value" style="color: #4ade80;">$27.5M</div>
+                <div class="kpi-sub">Book value</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Monthly Depreciation</div>
+                <div class="kpi-value">$485K</div>
+                <div class="kpi-sub">Feb 2026</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">YTD Additions</div>
+                <div class="kpi-value">$2.1M</div>
+                <div class="kpi-sub">34 new assets</div>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="card">
+                <div class="card-title">📈 Asset Value Trend</div>
+                <canvas id="assetTrendChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">📊 Asset Mix</div>
+                <canvas id="assetMixChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Fixed Asset Summary by Category</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Assets</th>
+                        <th>Gross Value</th>
+                        <th>Accum. Depr.</th>
+                        <th>Net Value</th>
+                        <th>Avg Life</th>
+                        <th>Monthly Depr.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🖥️ Network Equipment</td>
+                        <td>892</td>
+                        <td>$24,567,890</td>
+                        <td class="negative">-$9,234,567</td>
+                        <td>$15,333,323</td>
+                        <td>5 years</td>
+                        <td>$245,679</td>
+                    </tr>
+                    <tr>
+                        <td>🏢 Leasehold Improvements</td>
+                        <td>156</td>
+                        <td>$8,765,432</td>
+                        <td class="negative">-$3,456,789</td>
+                        <td>$5,308,643</td>
+                        <td>10 years</td>
+                        <td>$73,045</td>
+                    </tr>
+                    <tr>
+                        <td>💻 Computer Equipment</td>
+                        <td>678</td>
+                        <td>$5,678,901</td>
+                        <td class="negative">-$2,890,123</td>
+                        <td>$2,788,778</td>
+                        <td>3 years</td>
+                        <td>$94,648</td>
+                    </tr>
+                    <tr>
+                        <td>🪑 Furniture & Fixtures</td>
+                        <td>345</td>
+                        <td>$3,456,789</td>
+                        <td class="negative">-$1,567,890</td>
+                        <td>$1,888,899</td>
+                        <td>7 years</td>
+                        <td>$41,152</td>
+                    </tr>
+                    <tr>
+                        <td>🚗 Vehicles</td>
+                        <td>12</td>
+                        <td>$890,123</td>
+                        <td class="negative">-$456,789</td>
+                        <td>$433,334</td>
+                        <td>5 years</td>
+                        <td>$14,835</td>
+                    </tr>
+                    <tr>
+                        <td>🔧 Other Equipment</td>
+                        <td>73</td>
+                        <td>$2,340,865</td>
+                        <td class="negative">-$593,842</td>
+                        <td>$1,747,023</td>
+                        <td>5 years</td>
+                        <td>$15,641</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Total PP&E</td>
+                        <td>2,156</td>
+                        <td>$45,700,000</td>
+                        <td class="negative">-$18,200,000</td>
+                        <td>$27,500,000</td>
+                        <td>—</td>
+                        <td>$485,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">🔍 Asset Register Detail</div>
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search assets by name, tag, or location...">
+            </div>
+            <div class="filter-tabs">
+                <div class="filter-tab active">All Assets</div>
+                <div class="filter-tab">Network</div>
+                <div class="filter-tab">Computer</div>
+                <div class="filter-tab">Furniture</div>
+                <div class="filter-tab">Recent Additions</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset Tag</th>
+                        <th>Description</th>
+                        <th>Location</th>
+                        <th>In Service</th>
+                        <th>Cost</th>
+                        <th>Net Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>NET-2024-001</td>
+                        <td>Cisco ASR 9000 Router</td>
+                        <td>DC-AMS3</td>
+                        <td>Jan 2024</td>
+                        <td>$125,000</td>
+                        <td>$93,750</td>
+                    </tr>
+                    <tr>
+                        <td>NET-2024-002</td>
+                        <td>Arista 7500R Switch</td>
+                        <td>DC-CHI1</td>
+                        <td>Feb 2024</td>
+                        <td>$98,500</td>
+                        <td>$75,117</td>
+                    </tr>
+                    <tr>
+                        <td>NET-2026-015</td>
+                        <td>Juniper MX960 Router</td>
+                        <td>DC-ASH1</td>
+                        <td>Jan 2026</td>
+                        <td>$156,000</td>
+                        <td>$153,400</td>
+                    </tr>
+                    <tr>
+                        <td>SRV-2025-089</td>
+                        <td>Dell PowerEdge R750</td>
+                        <td>DC-AMS3</td>
+                        <td>Jun 2025</td>
+                        <td>$24,500</td>
+                        <td>$18,375</td>
+                    </tr>
+                    <tr>
+                        <td>LHI-2022-004</td>
+                        <td>Office Buildout - Floor 3</td>
+                        <td>HQ-NYC</td>
+                        <td>Mar 2022</td>
+                        <td>$456,000</td>
+                        <td>$266,000</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align: center; padding: 16px; color: #64748b; font-size: 13px;">
+                Showing 5 of 2,156 assets • <a href="#" style="color: #3b82f6;">View All</a>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        new Chart(document.getElementById('assetTrendChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+                datasets: [
+                    { label: 'Gross PP&E', data: [42.1, 43.0, 43.8, 44.5, 45.2, 45.7], backgroundColor: '#3b82f6' },
+                    { label: 'Accum. Depr.', data: [-15.8, -16.3, -16.8, -17.3, -17.8, -18.2], backgroundColor: '#f87171' }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                    y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+        
+        new Chart(document.getElementById('assetMixChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Network', 'Leasehold', 'Computer', 'Furniture', 'Other'],
+                datasets: [{
+                    data: [56, 19, 10, 7, 8],
+                    backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
+            }
+        });
+    </script>
+</body>
+</html>
