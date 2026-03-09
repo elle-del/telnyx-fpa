@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>13-Week Cash Flow - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-220px); }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 16px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; }
+        .kpi-value { font-size: 24px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
+        .kpi-change { font-size: 12px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .kpi-change.negative { color: #f87171; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1200px; }
+        th, td { padding: 8px 6px; text-align: right; border-bottom: 1px solid #334155; white-space: nowrap; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; position: sticky; top: 0; background: #1e293b; }
+        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: #1e293b; min-width: 180px; }
+        tr:hover { background: #0f172a; }
+        .section-header { font-weight: 700; background: #0f172a; color: #f8fafc; }
+        .subtotal-row { font-weight: 600; background: #1a2332; }
+        .total-row { font-weight: 700; background: #0f172a; border-top: 2px solid #475569; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        .week-actual { background: rgba(59, 130, 246, 0.1); }
+        .week-forecast { background: rgba(139, 92, 246, 0.05); }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> Mapping</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item active"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>13-Week Cash Flow Forecast</h1>
+                    <div class="subtitle">Rolling weekly cash projection • Week ending Mar 14, 2026</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Opening Cash</div>
+                <div class="kpi-value">$9.7M</div>
+                <div class="kpi-change">Week 1</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Closing Cash (Wk 13)</div>
+                <div class="kpi-value">$11.2M</div>
+                <div class="kpi-change positive">↑ $1.5M</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Min Cash Point</div>
+                <div class="kpi-value">$7.8M</div>
+                <div class="kpi-change">Week 6</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Avg Weekly Net</div>
+                <div class="kpi-value">$115K</div>
+                <div class="kpi-change positive">Positive trend</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Cash Flow Projection</div>
+            <canvas id="cashChart" height="80"></canvas>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">13-Week Detail</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line Item</th>
+                            <th class="week-actual">W1<br>Mar 14</th>
+                            <th class="week-actual">W2<br>Mar 21</th>
+                            <th class="week-forecast">W3<br>Mar 28</th>
+                            <th class="week-forecast">W4<br>Apr 4</th>
+                            <th class="week-forecast">W5<br>Apr 11</th>
+                            <th class="week-forecast">W6<br>Apr 18</th>
+                            <th class="week-forecast">W7<br>Apr 25</th>
+                            <th class="week-forecast">W8<br>May 2</th>
+                            <th class="week-forecast">W9<br>May 9</th>
+                            <th class="week-forecast">W10<br>May 16</th>
+                            <th class="week-forecast">W11<br>May 23</th>
+                            <th class="week-forecast">W12<br>May 30</th>
+                            <th class="week-forecast">W13<br>Jun 6</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="section-header"><td>Opening Cash</td><td>9,703</td><td>9,845</td><td>9,612</td><td>9,234</td><td>8,567</td><td>8,123</td><td>7,834</td><td>8,456</td><td>8,923</td><td>9,345</td><td>9,867</td><td>10,234</td><td>10,678</td><td>-</td></tr>
+                        
+                        <tr class="section-header"><td colspan="15">Receipts</td></tr>
+                        <tr><td style="padding-left:20px">Customer Collections</td><td>3,245</td><td>2,890</td><td>3,456</td><td>3,123</td><td>3,567</td><td>3,234</td><td>3,890</td><td>3,456</td><td>3,678</td><td>3,890</td><td>3,567</td><td>3,789</td><td>3,456</td><td>45,241</td></tr>
+                        <tr><td style="padding-left:20px">Other Receipts</td><td>125</td><td>89</td><td>156</td><td>134</td><td>145</td><td>167</td><td>189</td><td>145</td><td>178</td><td>156</td><td>189</td><td>167</td><td>145</td><td>1,985</td></tr>
+                        <tr class="subtotal-row"><td>Total Receipts</td><td>3,370</td><td>2,979</td><td>3,612</td><td>3,257</td><td>3,712</td><td>3,401</td><td>4,079</td><td>3,601</td><td>3,856</td><td>4,046</td><td>3,756</td><td>3,956</td><td>3,601</td><td>47,226</td></tr>
+                        
+                        <tr class="section-header"><td colspan="15">Payments</td></tr>
+                        <tr><td style="padding-left:20px">Payroll</td><td>1,456</td><td>0</td><td>1,489</td><td>0</td><td>1,523</td><td>0</td><td>1,534</td><td>0</td><td>1,567</td><td>0</td><td>1,589</td><td>0</td><td>1,612</td><td>10,770</td></tr>
+                        <tr><td style="padding-left:20px">Vendor Payments</td><td>1,234</td><td>1,678</td><td>1,890</td><td>2,345</td><td>1,567</td><td>1,234</td><td>1,456</td><td>1,678</td><td>1,345</td><td>1,890</td><td>1,234</td><td>1,567</td><td>1,456</td><td>20,574</td></tr>
+                        <tr><td style="padding-left:20px">Network Costs</td><td>456</td><td>534</td><td>489</td><td>523</td><td>567</td><td>534</td><td>478</td><td>512</td><td>534</td><td>567</td><td>523</td><td>489</td><td>534</td><td>6,740</td></tr>
+                        <tr><td style="padding-left:20px">Other Payments</td><td>82</td><td>134</td><td>112</td><td>156</td><td>99</td><td>122</td><td>89</td><td>145</td><td>112</td><td>134</td><td>98</td><td>156</td><td>121</td><td>1,560</td></tr>
+                        <tr class="subtotal-row"><td>Total Payments</td><td>3,228</td><td>2,346</td><td>3,990</td><td>3,024</td><td>3,756</td><td>1,890</td><td>3,557</td><td>2,335</td><td>3,558</td><td>2,591</td><td>3,444</td><td>2,212</td><td>3,723</td><td>39,654</td></tr>
+                        
+                        <tr class="total-row"><td>Net Cash Flow</td><td class="positive">142</td><td class="positive">633</td><td class="negative">-378</td><td class="positive">233</td><td class="negative">-44</td><td class="positive">1,511</td><td class="positive">522</td><td class="positive">1,266</td><td class="positive">298</td><td class="positive">1,455</td><td class="positive">312</td><td class="positive">1,744</td><td class="negative">-122</td><td class="positive">7,572</td></tr>
+                        <tr class="total-row"><td>Closing Cash</td><td>9,845</td><td>9,612</td><td>9,234</td><td>8,567</td><td>8,123</td><td>7,834</td><td>8,456</td><td>8,923</td><td>9,345</td><td>9,867</td><td>10,234</td><td>10,678</td><td>11,200</td><td>11,200</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 12px;">* Amounts in thousands (000s). Blue columns = Actuals, Purple columns = Forecast</p>
+        </div>
+    </main>
+    
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+        
+        new Chart(document.getElementById('cashChart'), {
+            type: 'line',
+            data: {
+                labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12', 'W13'],
+                datasets: [{
+                    label: 'Closing Cash ($K)',
+                    data: [9845, 9612, 9234, 8567, 8123, 7834, 8456, 8923, 9345, 9867, 10234, 10678, 11200],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Min Cash Threshold',
+                    data: [7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000, 7000],
+                    borderColor: '#f87171',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { ticks: { color: '#94a3b8', callback: v => '$' + (v/1000).toFixed(1) + 'M' }, grid: { color: '#334155' } },
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                },
+                plugins: { legend: { labels: { color: '#e2e8f0' } } }
+            }
+        });
+    </script>
+</body>
+</html>

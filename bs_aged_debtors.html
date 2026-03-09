@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aged Debtors - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-220px); }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 16px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 6px; color: #f8fafc; }
+        .kpi-change { font-size: 12px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .kpi-change.negative { color: #f87171; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .charts-grid { grid-template-columns: 1fr; } }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .total-row { font-weight: 700; background: #0f172a; border-top: 2px solid #475569; }
+        .overdue { color: #f87171; }
+        .current { color: #4ade80; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item active"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Aged Debtors</h1>
+                    <div class="subtitle">Accounts Receivable Aging Analysis • As of Mar 6, 2026</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total AR</div>
+                <div class="kpi-value">$42.2M</div>
+                <div class="kpi-change">100%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Current (0-30)</div>
+                <div class="kpi-value current">$28.4M</div>
+                <div class="kpi-change positive">67.3%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">31-60 Days</div>
+                <div class="kpi-value">$8.2M</div>
+                <div class="kpi-change">19.4%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">61-90 Days</div>
+                <div class="kpi-value">$3.6M</div>
+                <div class="kpi-change negative">8.5%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">90+ Days</div>
+                <div class="kpi-value overdue">$2.0M</div>
+                <div class="kpi-change negative">4.7%</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <div class="card-title">Aging Trend</div>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="card">
+                <div class="card-title">Current Aging Mix</div>
+                <canvas id="mixChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Top 20 Debtors by Balance</div>
+            <table>
+                <thead>
+                    <tr><th>Customer</th><th>Total</th><th>Current</th><th>31-60</th><th>61-90</th><th>90+</th><th>DSO</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Acme Corporation</td><td>$2,456,789</td><td class="current">$1,890,234</td><td>$345,678</td><td>$156,789</td><td class="overdue">$64,088</td><td>38</td></tr>
+                    <tr><td>TechStart Inc</td><td>$1,892,345</td><td class="current">$1,234,567</td><td>$456,789</td><td>$134,567</td><td class="overdue">$66,422</td><td>42</td></tr>
+                    <tr><td>Global Comms Ltd</td><td>$1,567,234</td><td class="current">$1,123,456</td><td>$234,567</td><td>$145,678</td><td class="overdue">$63,533</td><td>35</td></tr>
+                    <tr><td>DataFlow Systems</td><td>$1,345,678</td><td class="current">$987,654</td><td>$234,567</td><td>$89,012</td><td class="overdue">$34,445</td><td>41</td></tr>
+                    <tr><td>CloudNine Services</td><td>$1,234,567</td><td class="current">$890,123</td><td>$198,765</td><td>$98,765</td><td class="overdue">$46,914</td><td>39</td></tr>
+                    <tr><td>Nexus Networks</td><td>$1,123,456</td><td class="current">$823,456</td><td>$178,901</td><td>$78,901</td><td class="overdue">$42,198</td><td>44</td></tr>
+                    <tr><td>Summit Healthcare</td><td>$987,654</td><td class="current">$734,567</td><td>$156,789</td><td>$67,890</td><td class="overdue">$28,408</td><td>36</td></tr>
+                    <tr><td>Pinnacle Finance</td><td>$876,543</td><td class="current">$654,321</td><td>$134,567</td><td>$56,789</td><td class="overdue">$30,866</td><td>40</td></tr>
+                    <tr><td>Metro Logistics</td><td>$765,432</td><td class="current">$567,890</td><td>$123,456</td><td>$45,678</td><td class="overdue">$28,408</td><td>37</td></tr>
+                    <tr><td>EcoTech Solutions</td><td>$654,321</td><td class="current">$489,012</td><td>$98,765</td><td>$43,210</td><td class="overdue">$23,334</td><td>43</td></tr>
+                    <tr class="total-row"><td>Top 10 Total</td><td>$12,904,019</td><td>$9,395,280</td><td>$2,162,844</td><td>$917,279</td><td>$428,616</td><td>40</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+    
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+        
+        new Chart(document.getElementById('trendChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+                datasets: [
+                    { label: 'Current', data: [25.2, 26.1, 27.3, 27.8, 28.1, 28.4], backgroundColor: '#22c55e', stack: 's' },
+                    { label: '31-60', data: [7.8, 7.5, 7.9, 8.0, 8.1, 8.2], backgroundColor: '#f59e0b', stack: 's' },
+                    { label: '61-90', data: [3.2, 3.4, 3.5, 3.4, 3.5, 3.6], backgroundColor: '#f97316', stack: 's' },
+                    { label: '90+', data: [1.8, 1.9, 1.9, 2.0, 2.0, 2.0], backgroundColor: '#ef4444', stack: 's' }
+                ]
+            },
+            options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+        });
+        
+        new Chart(document.getElementById('mixChart'), {
+            type: 'doughnut',
+            data: { labels: ['Current', '31-60 Days', '61-90 Days', '90+ Days'], datasets: [{ data: [28.4, 8.2, 3.6, 2.0], backgroundColor: ['#22c55e', '#f59e0b', '#f97316', '#ef4444'], borderWidth: 0 }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } } }
+        });
+    </script>
+</body>
+</html>
