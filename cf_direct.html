@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cash Flow Direct - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-secondary { background: #334155; color: #e2e8f0; }
+        
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px; }
+        .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .kpi-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+        .kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        @media (max-width: 1000px) { .grid-2col { grid-template-columns: 1fr; } }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
+        th:first-child, td:first-child { text-align: left; }
+        tr:hover { background: #0f172a; }
+        .section-header { font-weight: 700; background: #0f172a; color: #f8fafc; }
+        .subtotal-row { font-weight: 600; background: #1a2332; }
+        .total-row { font-weight: 700; background: #0f172a; border-top: 2px solid #475569; }
+        .indent { padding-left: 24px !important; }
+        
+        .source-badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; margin-left: 8px; }
+        .source-bank { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+        .source-erp { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item active"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+            <a href="cash_flow.html" class="nav-item"><span class="nav-icon">💵</span> Cash Flow Statement</a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Cash Flow — Direct Method</h1>
+                <div class="subtitle">Actual receipts and payments from bank transactions • Feb 2026</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary">📥 Export</button>
+                <button class="btn btn-primary">🔄 Sync Bank Data</button>
+            </div>
+        </div>
+        
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-label">Cash Receipts</div>
+                <div class="kpi-value positive">$19.2M</div>
+                <div class="kpi-sub">Feb 2026</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Cash Payments</div>
+                <div class="kpi-value negative">-$15.8M</div>
+                <div class="kpi-sub">All outflows</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Net Operating</div>
+                <div class="kpi-value positive">$3.4M</div>
+                <div class="kpi-sub">Receipts - Payments</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Ending Cash</div>
+                <div class="kpi-value">$9.8M</div>
+                <div class="kpi-sub">Reconciled ✓</div>
+            </div>
+        </div>
+        
+        <div class="grid-2col">
+            <div class="card">
+                <div class="card-title">💰 Cash Receipts</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Jan 2026</th>
+                            <th>Feb 2026</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Customer Collections <span class="source-badge source-bank">Bank</span></td>
+                            <td class="positive">$16,234,567</td>
+                            <td class="positive">$17,456,789</td>
+                        </tr>
+                        <tr>
+                            <td>Prepaid Customer Deposits</td>
+                            <td class="positive">$1,234,567</td>
+                            <td class="positive">$1,345,678</td>
+                        </tr>
+                        <tr>
+                            <td>Interest Income</td>
+                            <td class="positive">$45,678</td>
+                            <td class="positive">$52,345</td>
+                        </tr>
+                        <tr>
+                            <td>Tax Refunds</td>
+                            <td>$0</td>
+                            <td class="positive">$234,567</td>
+                        </tr>
+                        <tr>
+                            <td>Other Receipts</td>
+                            <td class="positive">$67,890</td>
+                            <td class="positive">$78,901</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total Receipts</td>
+                            <td class="positive">$17,582,702</td>
+                            <td class="positive">$19,168,280</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">💸 Cash Payments</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Jan 2026</th>
+                            <th>Feb 2026</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vendor Payments <span class="source-badge source-erp">ERP</span></td>
+                            <td class="negative">-$6,789,012</td>
+                            <td class="negative">-$7,123,456</td>
+                        </tr>
+                        <tr>
+                            <td>Payroll & Benefits</td>
+                            <td class="negative">-$5,456,789</td>
+                            <td class="negative">-$5,567,890</td>
+                        </tr>
+                        <tr>
+                            <td>Taxes Paid</td>
+                            <td class="negative">-$345,678</td>
+                            <td class="negative">-$456,789</td>
+                        </tr>
+                        <tr>
+                            <td>Interest Paid</td>
+                            <td class="negative">-$287,500</td>
+                            <td class="negative">-$291,875</td>
+                        </tr>
+                        <tr>
+                            <td>Capital Expenditures</td>
+                            <td class="negative">-$1,456,789</td>
+                            <td class="negative">-$1,234,567</td>
+                        </tr>
+                        <tr>
+                            <td>Debt Repayments</td>
+                            <td class="negative">-$916,667</td>
+                            <td class="negative">-$916,667</td>
+                        </tr>
+                        <tr>
+                            <td>Other Payments</td>
+                            <td class="negative">-$234,567</td>
+                            <td class="negative">-$198,765</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total Payments</td>
+                            <td class="negative">-$15,487,002</td>
+                            <td class="negative">-$15,790,009</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Cash Flow Summary (Direct Method)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Line Item</th>
+                        <th>Jan 2026</th>
+                        <th>Feb 2026</th>
+                        <th>YTD 2026</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="section-header"><td colspan="4">Operating Activities</td></tr>
+                    <tr>
+                        <td class="indent">Cash received from customers</td>
+                        <td class="positive">$17,469,134</td>
+                        <td class="positive">$18,802,467</td>
+                        <td class="positive">$36,271,601</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Cash paid to suppliers</td>
+                        <td class="negative">-$6,789,012</td>
+                        <td class="negative">-$7,123,456</td>
+                        <td class="negative">-$13,912,468</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Cash paid to employees</td>
+                        <td class="negative">-$5,456,789</td>
+                        <td class="negative">-$5,567,890</td>
+                        <td class="negative">-$11,024,679</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Interest received</td>
+                        <td class="positive">$45,678</td>
+                        <td class="positive">$52,345</td>
+                        <td class="positive">$98,023</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Interest paid</td>
+                        <td class="negative">-$287,500</td>
+                        <td class="negative">-$291,875</td>
+                        <td class="negative">-$579,375</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Taxes paid</td>
+                        <td class="negative">-$345,678</td>
+                        <td class="negative">-$456,789</td>
+                        <td class="negative">-$802,467</td>
+                    </tr>
+                    <tr class="subtotal-row">
+                        <td>Net Cash from Operating</td>
+                        <td class="positive">$4,635,833</td>
+                        <td class="positive">$5,414,802</td>
+                        <td class="positive">$10,050,635</td>
+                    </tr>
+                    
+                    <tr class="section-header"><td colspan="4">Investing Activities</td></tr>
+                    <tr>
+                        <td class="indent">Purchase of PP&E</td>
+                        <td class="negative">-$1,456,789</td>
+                        <td class="negative">-$1,234,567</td>
+                        <td class="negative">-$2,691,356</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Acquisitions</td>
+                        <td>$0</td>
+                        <td class="negative">-$500,000</td>
+                        <td class="negative">-$500,000</td>
+                    </tr>
+                    <tr class="subtotal-row">
+                        <td>Net Cash from Investing</td>
+                        <td class="negative">-$1,456,789</td>
+                        <td class="negative">-$1,734,567</td>
+                        <td class="negative">-$3,191,356</td>
+                    </tr>
+                    
+                    <tr class="section-header"><td colspan="4">Financing Activities</td></tr>
+                    <tr>
+                        <td class="indent">Repayment of debt</td>
+                        <td class="negative">-$916,667</td>
+                        <td class="negative">-$916,667</td>
+                        <td class="negative">-$1,833,334</td>
+                    </tr>
+                    <tr>
+                        <td class="indent">Proceeds from options</td>
+                        <td class="positive">$156,789</td>
+                        <td class="positive">$123,456</td>
+                        <td class="positive">$280,245</td>
+                    </tr>
+                    <tr class="subtotal-row">
+                        <td>Net Cash from Financing</td>
+                        <td class="negative">-$759,878</td>
+                        <td class="negative">-$793,211</td>
+                        <td class="negative">-$1,553,089</td>
+                    </tr>
+                    
+                    <tr class="total-row">
+                        <td>Net Change in Cash</td>
+                        <td class="positive">$2,419,166</td>
+                        <td class="positive">$2,887,024</td>
+                        <td class="positive">$5,306,190</td>
+                    </tr>
+                    <tr>
+                        <td>Beginning Cash</td>
+                        <td>$4,493,810</td>
+                        <td>$6,912,976</td>
+                        <td>$4,493,810</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Ending Cash</td>
+                        <td>$6,912,976</td>
+                        <td>$9,800,000</td>
+                        <td>$9,800,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">🔄 Reconciliation to Indirect Method</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Direct</th>
+                        <th>Indirect</th>
+                        <th>Variance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Operating Cash Flow</td>
+                        <td>$5,414,802</td>
+                        <td>$5,414,802</td>
+                        <td style="color: #4ade80;">$0 ✓</td>
+                    </tr>
+                    <tr>
+                        <td>Investing Cash Flow</td>
+                        <td>-$1,734,567</td>
+                        <td>-$1,734,567</td>
+                        <td style="color: #4ade80;">$0 ✓</td>
+                    </tr>
+                    <tr>
+                        <td>Financing Cash Flow</td>
+                        <td>-$793,211</td>
+                        <td>-$793,211</td>
+                        <td style="color: #4ade80;">$0 ✓</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Net Change in Cash</td>
+                        <td>$2,887,024</td>
+                        <td>$2,887,024</td>
+                        <td style="color: #4ade80;">$0 ✓</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
