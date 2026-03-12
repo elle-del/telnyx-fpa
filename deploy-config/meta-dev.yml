@@ -1,0 +1,46 @@
+names:
+  service: fpa-dashboard
+
+project:
+  squad: finance
+  primary_maintainer: elle-del
+  public_api: false
+  private_api: true
+
+deploy:
+  k8s_clusters:
+    - gce-backend-dc2-dev
+
+  service_images:
+    fpa-dashboard:
+      version: PENDING_FIRST_BUILD  # Update after first CI build
+
+  # Resources (lightweight static site)
+  cpu: 100
+  cpu_limit: 500
+  memory: 128
+  memory_limit: 256
+  ephemeral_storage_limit: 1
+
+  instances: 1
+
+  # Consul service registration
+  service:
+    - name: fpa-dashboard
+      port: 8080
+      tags: ["consul"]
+      check:
+        type: http
+        path: /health
+        interval: 30s
+        timeout: 10s
+      ready:
+        type: http
+        path: /ready
+        interval: 5s
+        timeout: 10s
+
+  # Environment variables
+  env:
+    static:
+      ENV: dev

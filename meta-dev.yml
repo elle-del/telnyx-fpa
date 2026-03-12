@@ -1,0 +1,11 @@
+names:
+  service: fpa-dashboard
+  github: fpa-dashboard
+
+project:
+  squad: finance
+  primary_maintainer: elle-del
+  public_api: false
+  private_api: true
+
+build: {}
