@@ -1,5 +1,8 @@
 # FP&A Dashboard - Static site served by nginx
-FROM nginx:1.27-alpine3.21
+FROM nginx:alpine
+
+# Update packages to get latest security patches
+RUN apk update && apk upgrade --no-cache
 
 # Copy static files
 COPY *.html /usr/share/nginx/html/
