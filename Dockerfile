@@ -1,5 +1,5 @@
 # FP&A Dashboard - Static site served by nginx
-FROM nginx:1.25-alpine
+FROM nginx:1.27-alpine3.21
 
 # Copy static files
 COPY *.html /usr/share/nginx/html/
