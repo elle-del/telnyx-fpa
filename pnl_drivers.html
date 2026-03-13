@@ -40,7 +40,12 @@
         .driver-name { font-weight: 600; font-size: 14px; }
         .driver-type { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
         
-        .driver-inputs { display: grid; gap: 12px; }
+        .driver-metrics { display: grid; gap: 12px; }
+        .metric-row { display: flex; align-items: center; gap: 12px; }
+        .metric-label { flex: 1; font-size: 12px; color: #94a3b8; }
+        .metric-value { font-size: 14px; font-weight: 600; color: #e2e8f0; min-width: 100px; text-align: right; }
+        
+        .driver-inputs { display: grid; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #334155; }
         .input-row { display: flex; align-items: center; gap: 12px; }
         .input-label { flex: 1; font-size: 12px; color: #94a3b8; }
         .input-field { width: 100px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 6px 10px; color: #e2e8f0; font-size: 13px; text-align: right; }
@@ -55,58 +60,47 @@
         .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
         @media (max-width: 1000px) { .charts-row { grid-template-columns: 1fr; } }
         
-        .formula-display { background: #0f172a; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; color: #94a3b8; margin-top: 12px; }
-        .formula-display code { color: #a78bfa; }
-        
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px 8px; text-align: right; border-bottom: 1px solid #334155; }
         th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 10px; }
         th:first-child, td:first-child { text-align: left; }
         tr:hover { background: #0f172a; }
         .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        .loading { text-align: center; padding: 40px; color: #64748b; }
+        .data-source { font-size: 11px; color: #64748b; margin-top: 8px; }
     </style>
 </head>
 <body>
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar">
         <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
-        
         <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
-        
         <div class="nav-section">
             <div class="nav-section-title">P&L</div>
             <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
-            <a href="pnl_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> Mapping</a>
             <a href="pnl_drivers.html" class="nav-item active"><span class="nav-icon">⚡</span> Drivers</a>
             <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
             <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
             <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
         </div>
-        
         <div class="nav-section">
             <div class="nav-section-title">Balance Sheet</div>
             <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
-            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
             <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
             <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
-            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
-            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📋</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📋</span> Accruals & Defer</a>
             <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
             <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
             <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
         </div>
-        
         <div class="nav-section">
             <div class="nav-section-title">Cash Flow</div>
-            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
-            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📊</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📊</span> Direct Method</a>
             <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
         </div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Reports</div>
-            <a href="reports.html" class="nav-item NAV_ACTIVE_reports"><span class="nav-icon">📊</span> Reports</a>
-        </div>
-        
         <div class="nav-section">
             <div class="nav-section-title">System</div>
             <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
@@ -118,18 +112,18 @@
         <div class="header">
             <div>
                 <h1>Revenue Drivers</h1>
-                <div class="subtitle">Configure assumptions and growth drivers for forecasting</div>
+                <div class="subtitle">Actuals from Data Warehouse • Assumptions for forecasting</div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary">Reset to Defaults</button>
-                <button class="btn btn-primary" onclick="saveDrivers()">Save Drivers</button>
+                <button class="btn btn-secondary" onclick="loadData()">🔄 Refresh</button>
+                <button class="btn btn-primary" onclick="saveDrivers()">Save Forecast Assumptions</button>
             </div>
         </div>
         
         <div class="charts-row">
             <div class="card">
-                <div class="card-title">📈 Revenue Growth Projection</div>
-                <canvas id="growthChart"></canvas>
+                <div class="card-title">📈 Revenue by Product (YTD)</div>
+                <canvas id="revenueChart"></canvas>
             </div>
             <div class="card">
                 <div class="card-title">📊 Revenue Mix</div>
@@ -138,298 +132,351 @@
         </div>
         
         <div class="card">
-            <div class="card-title">⚡ Revenue Drivers</div>
-            <div class="drivers-grid">
-                <div class="driver-card">
-                    <div class="driver-header">
-                        <span class="driver-name">📞 Voice Revenue</span>
-                        <span class="driver-type">Volume × Rate</span>
-                    </div>
-                    <div class="driver-inputs">
-                        <div class="input-row">
-                            <span class="input-label">Monthly Minutes (M)</span>
-                            <input type="number" class="input-field" value="2850" id="voiceMinutes" onchange="recalculate()">
-                            <span class="input-unit">M</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">Avg Rate per Minute</span>
-                            <input type="number" class="input-field" value="0.0085" step="0.0001" id="voiceRate" onchange="recalculate()">
-                            <span class="input-unit">$</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">YoY Growth Rate</span>
-                            <input type="number" class="input-field" value="12" id="voiceGrowth" onchange="recalculate()">
-                            <span class="input-unit">%</span>
-                        </div>
-                    </div>
-                    <div class="driver-output">
-                        <div class="output-row">
-                            <span class="output-label">Monthly Revenue</span>
-                            <span class="output-value" id="voiceMonthly">$24.2M</span>
-                        </div>
-                        <div class="output-row">
-                            <span class="output-label">Annual Revenue</span>
-                            <span class="output-value" id="voiceAnnual">$290.7M</span>
-                        </div>
-                    </div>
-                    <div class="formula-display">
-                        <code>minutes × rate × 12 × (1 + growth)</code>
-                    </div>
-                </div>
-                
-                <div class="driver-card">
-                    <div class="driver-header">
-                        <span class="driver-name">💬 Messaging Revenue</span>
-                        <span class="driver-type">Volume × Rate</span>
-                    </div>
-                    <div class="driver-inputs">
-                        <div class="input-row">
-                            <span class="input-label">Monthly Messages (M)</span>
-                            <input type="number" class="input-field" value="890" id="msgVolume" onchange="recalculate()">
-                            <span class="input-unit">M</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">Avg Rate per Message</span>
-                            <input type="number" class="input-field" value="0.0075" step="0.0001" id="msgRate" onchange="recalculate()">
-                            <span class="input-unit">$</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">YoY Growth Rate</span>
-                            <input type="number" class="input-field" value="18" id="msgGrowth" onchange="recalculate()">
-                            <span class="input-unit">%</span>
-                        </div>
-                    </div>
-                    <div class="driver-output">
-                        <div class="output-row">
-                            <span class="output-label">Monthly Revenue</span>
-                            <span class="output-value" id="msgMonthly">$6.7M</span>
-                        </div>
-                        <div class="output-row">
-                            <span class="output-label">Annual Revenue</span>
-                            <span class="output-value" id="msgAnnual">$94.5M</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="driver-card">
-                    <div class="driver-header">
-                        <span class="driver-name">📱 Numbers Revenue</span>
-                        <span class="driver-type">Subscribers × ARPU</span>
-                    </div>
-                    <div class="driver-inputs">
-                        <div class="input-row">
-                            <span class="input-label">Active Numbers (K)</span>
-                            <input type="number" class="input-field" value="1250" id="numbersCount" onchange="recalculate()">
-                            <span class="input-unit">K</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">Monthly ARPU</span>
-                            <input type="number" class="input-field" value="2.85" step="0.01" id="numbersArpu" onchange="recalculate()">
-                            <span class="input-unit">$</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">Net Adds per Month</span>
-                            <input type="number" class="input-field" value="45" id="numbersAdds" onchange="recalculate()">
-                            <span class="input-unit">K</span>
-                        </div>
-                    </div>
-                    <div class="driver-output">
-                        <div class="output-row">
-                            <span class="output-label">Monthly Revenue</span>
-                            <span class="output-value" id="numbersMonthly">$3.6M</span>
-                        </div>
-                        <div class="output-row">
-                            <span class="output-label">Annual Revenue</span>
-                            <span class="output-value" id="numbersAnnual">$48.2M</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="driver-card">
-                    <div class="driver-header">
-                        <span class="driver-name">🤖 AI Services Revenue</span>
-                        <span class="driver-type">Tokens × Rate</span>
-                    </div>
-                    <div class="driver-inputs">
-                        <div class="input-row">
-                            <span class="input-label">Monthly Tokens (B)</span>
-                            <input type="number" class="input-field" value="45" id="aiTokens" onchange="recalculate()">
-                            <span class="input-unit">B</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">Rate per 1M Tokens</span>
-                            <input type="number" class="input-field" value="0.15" step="0.01" id="aiRate" onchange="recalculate()">
-                            <span class="input-unit">$</span>
-                        </div>
-                        <div class="input-row">
-                            <span class="input-label">YoY Growth Rate</span>
-                            <input type="number" class="input-field" value="85" id="aiGrowth" onchange="recalculate()">
-                            <span class="input-unit">%</span>
-                        </div>
-                    </div>
-                    <div class="driver-output">
-                        <div class="output-row">
-                            <span class="output-label">Monthly Revenue</span>
-                            <span class="output-value" id="aiMonthly">$6.8M</span>
-                        </div>
-                        <div class="output-row">
-                            <span class="output-label">Annual Revenue</span>
-                            <span class="output-value" id="aiAnnual">$148.8M</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="card-title">⚡ Revenue Drivers by Product</div>
+            <div class="data-source" id="dataSource">Loading...</div>
+            <div class="drivers-grid" id="driversGrid">
+                <div class="loading">Loading driver data...</div>
             </div>
         </div>
         
         <div class="card">
-            <div class="card-title">📋 Driver Summary</div>
-            <table>
+            <div class="card-title">📋 Revenue Summary</div>
+            <table id="summaryTable">
                 <thead>
                     <tr>
-                        <th>Revenue Stream</th>
-                        <th>2025 Actual</th>
-                        <th>2026 Forecast</th>
-                        <th>Growth</th>
-                        <th>% of Total</th>
+                        <th>Product</th>
+                        <th id="lastYearHeader">2025 Actual</th>
+                        <th id="ytdHeader">2026 YTD</th>
+                        <th>Latest Month</th>
+                        <th>YoY Growth</th>
+                        <th>Forecast Growth</th>
+                        <th id="forecastHeader">2026 Forecast</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>Voice</td>
-                        <td>$45.2M</td>
-                        <td id="voiceForecast">$50.7M</td>
-                        <td class="positive">+12.0%</td>
-                        <td>26%</td>
-                    </tr>
-                    <tr>
-                        <td>Messaging</td>
-                        <td>$38.1M</td>
-                        <td id="msgForecast">$45.0M</td>
-                        <td class="positive">+18.0%</td>
-                        <td>23%</td>
-                    </tr>
-                    <tr>
-                        <td>Numbers</td>
-                        <td>$28.9M</td>
-                        <td id="numbersForecast">$32.1M</td>
-                        <td class="positive">+11.0%</td>
-                        <td>16%</td>
-                    </tr>
-                    <tr>
-                        <td>AI Services</td>
-                        <td>$12.4M</td>
-                        <td id="aiForecast">$22.9M</td>
-                        <td class="positive">+85.0%</td>
-                        <td>12%</td>
-                    </tr>
-                    <tr>
-                        <td>Other</td>
-                        <td>$48.0M</td>
-                        <td>$52.3M</td>
-                        <td class="positive">+9.0%</td>
-                        <td>23%</td>
-                    </tr>
-                    <tr style="font-weight: 700; background: #0f172a;">
-                        <td>Total Revenue</td>
-                        <td>$172.6M</td>
-                        <td id="totalForecast">$203.0M</td>
-                        <td class="positive">+17.6%</td>
-                        <td>100%</td>
-                    </tr>
+                <tbody id="summaryBody">
+                    <tr><td colspan="7" class="loading">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
     
     <script>
-        const growthChart = new Chart(document.getElementById('growthChart'), {
-            type: 'line',
-            data: {
-                labels: ['Q1 25', 'Q2', 'Q3', 'Q4', 'Q1 26', 'Q2', 'Q3', 'Q4'],
-                datasets: [{
-                    label: 'Actual',
-                    data: [38.2, 41.5, 43.8, 49.1, 35.5, null, null, null],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }, {
-                    label: 'Forecast',
-                    data: [null, null, null, null, 35.5, 48.2, 52.1, 58.4],
-                    borderColor: '#22c55e',
-                    borderDash: [5, 5],
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } },
-                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+        // Fetch from live API (falls back to static file if API unavailable)
+        const API_URL = '/api/drivers';
+        const FALLBACK_URL = 'data/drivers.json';
+        let driverData = null;
+        let forecastAssumptions = {};
+        let revenueChart = null;
+        let mixChart = null;
+        
+        const productIcons = {
+            'Voice Products': '📞',
+            'Messaging Products': '💬',
+            'Number Products': '📱',
+            'AI Products': '🤖',
+            'Connectivity Products': '🌐',
+            'Identity Products': '🔐',
+            'Storage Products': '💾',
+            'Support Products': '🛠️',
+            'Other Products': '📦'
+        };
+        
+        const productColors = {
+            'Voice Products': '#3b82f6',
+            'Messaging Products': '#22c55e',
+            'Number Products': '#f59e0b',
+            'AI Products': '#a855f7',
+            'Connectivity Products': '#06b6d4',
+            'Identity Products': '#ec4899',
+            'Storage Products': '#64748b',
+            'Support Products': '#84cc16',
+            'Other Products': '#78716c'
+        };
+        
+        async function loadData() {
+            try {
+                // Try live API first, fallback to static file
+                let response = await fetch(API_URL);
+                if (!response.ok) {
+                    console.log('API unavailable, trying static file...');
+                    response = await fetch(FALLBACK_URL);
+                }
+                if (!response.ok) throw new Error('Failed to load data');
+                driverData = await response.json();
+                
+                document.getElementById('dataSource').textContent = 
+                    `Data source: finance.CSM_Rev_GP_Monthly • Last updated: ${driverData.generated_at} • Latest month: ${driverData.latestMonth}`;
+                
+                document.getElementById('lastYearHeader').textContent = `${driverData.lastYear} Actual`;
+                document.getElementById('ytdHeader').textContent = `${driverData.currentYear} YTD`;
+                document.getElementById('forecastHeader').textContent = `${driverData.currentYear} Forecast`;
+                
+                renderDrivers();
+                renderSummaryTable();
+                renderCharts();
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                document.getElementById('driversGrid').innerHTML = `
+                    <div class="loading" style="color: #f87171;">
+                        Failed to load data. Run the refresh script to generate data:<br>
+                        <code style="background: #1e293b; padding: 8px; display: block; margin-top: 8px;">
+                            python3 refresh_drivers.py
+                        </code>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderDrivers() {
+            const grid = document.getElementById('driversGrid');
+            const drivers = driverData.drivers;
+            
+            // Sort by last year revenue (descending)
+            const sortedProducts = Object.entries(drivers)
+                .sort((a, b) => b[1].lastYearActual - a[1].lastYearActual);
+            
+            grid.innerHTML = sortedProducts.map(([key, driver]) => {
+                const icon = productIcons[driver.name] || '📊';
+                const defaultGrowth = driver.yoyGrowth || 10;
+                forecastAssumptions[key] = forecastAssumptions[key] || defaultGrowth;
+                
+                return `
+                    <div class="driver-card">
+                        <div class="driver-header">
+                            <span class="driver-name">${icon} ${driver.name}</span>
+                            <span class="driver-type">Actual + Forecast</span>
+                        </div>
+                        <div class="driver-metrics">
+                            <div class="metric-row">
+                                <span class="metric-label">${driverData.lastYear} Annual</span>
+                                <span class="metric-value">$${formatNumber(driver.lastYearActual)}</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">${driverData.currentYear} YTD</span>
+                                <span class="metric-value">$${formatNumber(driver.ytdActual)}</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Latest Month (${driverData.latestMonth})</span>
+                                <span class="metric-value">$${formatNumber(driver.latestMonth)}</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Implied YoY Growth</span>
+                                <span class="metric-value ${driver.yoyGrowth >= 0 ? 'positive' : 'negative'}">
+                                    ${driver.yoyGrowth >= 0 ? '+' : ''}${driver.yoyGrowth.toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="driver-inputs">
+                            <div class="input-row">
+                                <span class="input-label">Forecast Growth Rate</span>
+                                <input type="number" class="input-field" value="${defaultGrowth.toFixed(1)}" 
+                                       id="growth_${key}" onchange="updateForecast('${key}')">
+                                <span class="input-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="driver-output">
+                            <div class="output-row">
+                                <span class="output-label">${driverData.currentYear} Forecast</span>
+                                <span class="output-value" id="forecast_${key}">
+                                    $${formatNumber(driver.lastYearActual * (1 + defaultGrowth/100))}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderSummaryTable() {
+            const tbody = document.getElementById('summaryBody');
+            const drivers = driverData.drivers;
+            
+            const sortedProducts = Object.entries(drivers)
+                .sort((a, b) => b[1].lastYearActual - a[1].lastYearActual);
+            
+            let totalLastYear = 0;
+            let totalYtd = 0;
+            let totalLatest = 0;
+            let totalForecast = 0;
+            
+            const rows = sortedProducts.map(([key, driver]) => {
+                const growth = forecastAssumptions[key] || driver.yoyGrowth || 10;
+                const forecast = driver.lastYearActual * (1 + growth/100);
+                
+                totalLastYear += driver.lastYearActual;
+                totalYtd += driver.ytdActual;
+                totalLatest += driver.latestMonth;
+                totalForecast += forecast;
+                
+                return `
+                    <tr>
+                        <td>${productIcons[driver.name] || ''} ${driver.name}</td>
+                        <td>$${formatNumber(driver.lastYearActual)}</td>
+                        <td>$${formatNumber(driver.ytdActual)}</td>
+                        <td>$${formatNumber(driver.latestMonth)}</td>
+                        <td class="${driver.yoyGrowth >= 0 ? 'positive' : 'negative'}">
+                            ${driver.yoyGrowth >= 0 ? '+' : ''}${driver.yoyGrowth.toFixed(1)}%
+                        </td>
+                        <td>
+                            <input type="number" class="input-field" value="${growth.toFixed(1)}" 
+                                   style="width: 70px;" id="table_growth_${key}" 
+                                   onchange="updateForecastFromTable('${key}')">%
+                        </td>
+                        <td id="table_forecast_${key}">$${formatNumber(forecast)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            const totalGrowth = totalLastYear > 0 ? ((totalForecast - totalLastYear) / totalLastYear * 100) : 0;
+            
+            tbody.innerHTML = rows + `
+                <tr style="font-weight: 700; background: #0f172a;">
+                    <td>Total Revenue</td>
+                    <td>$${formatNumber(totalLastYear)}</td>
+                    <td>$${formatNumber(totalYtd)}</td>
+                    <td>$${formatNumber(totalLatest)}</td>
+                    <td></td>
+                    <td></td>
+                    <td id="totalForecast">$${formatNumber(totalForecast)}</td>
+                </tr>
+            `;
+        }
+        
+        function renderCharts() {
+            const drivers = driverData.drivers;
+            const sortedProducts = Object.entries(drivers)
+                .sort((a, b) => b[1].lastYearActual - a[1].lastYearActual);
+            
+            const labels = sortedProducts.map(([_, d]) => d.name.replace(' Products', ''));
+            const lastYearData = sortedProducts.map(([_, d]) => d.lastYearActual / 1000000);
+            const ytdData = sortedProducts.map(([_, d]) => d.ytdActual / 1000000);
+            const colors = sortedProducts.map(([_, d]) => productColors[d.name]);
+            
+            // Revenue comparison chart
+            if (revenueChart) revenueChart.destroy();
+            revenueChart = new Chart(document.getElementById('revenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${driverData.lastYear} Full Year`,
+                            data: lastYearData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                        },
+                        {
+                            label: `${driverData.currentYear} YTD`,
+                            data: ytdData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)'
+                        }
+                    ]
                 },
-                plugins: { legend: { labels: { color: '#e2e8f0' } } }
-            }
-        });
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, 
+                            grid: { color: '#334155' } 
+                        },
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                }
+            });
+            
+            // Mix chart (pie)
+            if (mixChart) mixChart.destroy();
+            mixChart = new Chart(document.getElementById('mixChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: lastYearData,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { 
+                        legend: { 
+                            position: 'right', 
+                            labels: { color: '#e2e8f0' } 
+                        } 
+                    }
+                }
+            });
+        }
         
-        const mixChart = new Chart(document.getElementById('mixChart'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Voice', 'Messaging', 'Numbers', 'AI Services', 'Other'],
-                datasets: [{
-                    data: [26, 23, 16, 12, 23],
-                    backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#64748b']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } }
-            }
-        });
+        function updateForecast(key) {
+            const growth = parseFloat(document.getElementById(`growth_${key}`).value) || 0;
+            forecastAssumptions[key] = growth;
+            
+            const driver = driverData.drivers[key];
+            const forecast = driver.lastYearActual * (1 + growth/100);
+            
+            document.getElementById(`forecast_${key}`).textContent = `$${formatNumber(forecast)}`;
+            
+            // Sync table
+            const tableInput = document.getElementById(`table_growth_${key}`);
+            if (tableInput) tableInput.value = growth.toFixed(1);
+            const tableForecast = document.getElementById(`table_forecast_${key}`);
+            if (tableForecast) tableForecast.textContent = `$${formatNumber(forecast)}`;
+            
+            updateTotalForecast();
+        }
         
-        function recalculate() {
-            // Voice
-            const voiceMin = parseFloat(document.getElementById('voiceMinutes').value) || 0;
-            const voiceRate = parseFloat(document.getElementById('voiceRate').value) || 0;
-            const voiceGrowth = parseFloat(document.getElementById('voiceGrowth').value) || 0;
-            const voiceMonthly = voiceMin * voiceRate;
-            const voiceAnnual = voiceMonthly * 12 * (1 + voiceGrowth/100);
-            document.getElementById('voiceMonthly').textContent = '$' + (voiceMonthly).toFixed(1) + 'M';
-            document.getElementById('voiceAnnual').textContent = '$' + (voiceAnnual).toFixed(1) + 'M';
+        function updateForecastFromTable(key) {
+            const growth = parseFloat(document.getElementById(`table_growth_${key}`).value) || 0;
+            forecastAssumptions[key] = growth;
             
-            // Messaging
-            const msgVol = parseFloat(document.getElementById('msgVolume').value) || 0;
-            const msgRate = parseFloat(document.getElementById('msgRate').value) || 0;
-            const msgGrowth = parseFloat(document.getElementById('msgGrowth').value) || 0;
-            const msgMonthly = msgVol * msgRate;
-            const msgAnnual = msgMonthly * 12 * (1 + msgGrowth/100);
-            document.getElementById('msgMonthly').textContent = '$' + (msgMonthly).toFixed(1) + 'M';
-            document.getElementById('msgAnnual').textContent = '$' + (msgAnnual).toFixed(1) + 'M';
+            const driver = driverData.drivers[key];
+            const forecast = driver.lastYearActual * (1 + growth/100);
             
-            // Numbers
-            const numCount = parseFloat(document.getElementById('numbersCount').value) || 0;
-            const numArpu = parseFloat(document.getElementById('numbersArpu').value) || 0;
-            const numAdds = parseFloat(document.getElementById('numbersAdds').value) || 0;
-            const numMonthly = (numCount * numArpu) / 1000;
-            const avgNumbers = numCount + (numAdds * 6);
-            const numAnnual = (avgNumbers * numArpu * 12) / 1000;
-            document.getElementById('numbersMonthly').textContent = '$' + (numMonthly).toFixed(1) + 'M';
-            document.getElementById('numbersAnnual').textContent = '$' + (numAnnual).toFixed(1) + 'M';
+            // Sync card
+            const cardInput = document.getElementById(`growth_${key}`);
+            if (cardInput) cardInput.value = growth.toFixed(1);
+            const cardForecast = document.getElementById(`forecast_${key}`);
+            if (cardForecast) cardForecast.textContent = `$${formatNumber(forecast)}`;
             
-            // AI
-            const aiTokens = parseFloat(document.getElementById('aiTokens').value) || 0;
-            const aiRate = parseFloat(document.getElementById('aiRate').value) || 0;
-            const aiGrowth = parseFloat(document.getElementById('aiGrowth').value) || 0;
-            const aiMonthly = (aiTokens * 1000 * aiRate) / 1000;
-            const aiAnnual = aiMonthly * 12 * (1 + aiGrowth/100);
-            document.getElementById('aiMonthly').textContent = '$' + (aiMonthly).toFixed(1) + 'M';
-            document.getElementById('aiAnnual').textContent = '$' + (aiAnnual).toFixed(1) + 'M';
+            document.getElementById(`table_forecast_${key}`).textContent = `$${formatNumber(forecast)}`;
+            
+            updateTotalForecast();
+        }
+        
+        function updateTotalForecast() {
+            let total = 0;
+            for (const [key, driver] of Object.entries(driverData.drivers)) {
+                const growth = forecastAssumptions[key] || driver.yoyGrowth || 10;
+                total += driver.lastYearActual * (1 + growth/100);
+            }
+            document.getElementById('totalForecast').textContent = `$${formatNumber(total)}`;
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(0) + 'K';
+            }
+            return num.toFixed(0);
         }
         
         function saveDrivers() {
-            alert('Drivers saved successfully! Forecasts will be updated.');
+            console.log('Saving forecast assumptions:', forecastAssumptions);
+            localStorage.setItem('fpa_forecast_assumptions', JSON.stringify(forecastAssumptions));
+            alert('Forecast assumptions saved! These will be used in the Forecast module.');
         }
+        
+        // Load saved assumptions
+        const saved = localStorage.getItem('fpa_forecast_assumptions');
+        if (saved) {
+            try {
+                forecastAssumptions = JSON.parse(saved);
+            } catch (e) {}
+        }
+        
+        // Load data on page load
+        loadData();
     </script>
 </body>
 </html>
