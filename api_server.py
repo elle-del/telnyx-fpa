@@ -234,7 +234,7 @@ class APIHandler(BaseHTTPRequestHandler):
         print(f"[API] {args[0]}")
 
 
-def run_server(port=8080):
+def run_server(port=8081):
     server = HTTPServer(('0.0.0.0', port), APIHandler)
     print(f"FP&A API Server running on http://localhost:{port}")
     print("Endpoints:")
