@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+        
+        .main { margin-left: 240px; flex: 1; padding: 24px; }
+        
+        .header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        
+        .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .report-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 20px; transition: all 0.15s; }
+        .report-card:hover { border-color: #3b82f6; }
+        .report-card h3 { font-size: 15px; margin-bottom: 8px; }
+        .report-card p { font-size: 13px; color: #94a3b8; margin-bottom: 12px; }
+        .report-card .btn { display: inline-block; background: #3b82f6; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; }
+        .report-card .btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> Mapping</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_mapping.html" class="nav-item"><span class="nav-icon">🔗</span> BS Mapping</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item active"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <h1>📊 Reports</h1>
+            <div class="subtitle">Generate and download financial reports</div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Available Reports</div>
+            <div class="report-grid">
+                <div class="report-card">
+                    <h3>📄 Monthly P&L Report</h3>
+                    <p>Consolidated profit and loss statement for the current month</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+                <div class="report-card">
+                    <h3>📋 Balance Sheet Summary</h3>
+                    <p>Current balance sheet with all accounts</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+                <div class="report-card">
+                    <h3>💵 Cash Flow Statement</h3>
+                    <p>Monthly cash flow using indirect method</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+                <div class="report-card">
+                    <h3>📈 Executive Summary</h3>
+                    <p>High-level KPIs and trends for leadership</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+                <div class="report-card">
+                    <h3>🔮 Forecast vs Actual</h3>
+                    <p>Variance analysis comparing forecast to actuals</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+                <div class="report-card">
+                    <h3>📅 Board Deck</h3>
+                    <p>Monthly financial package for board meetings</p>
+                    <a href="#" class="btn">Generate</a>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
