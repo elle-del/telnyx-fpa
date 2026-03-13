@@ -1,0 +1,76 @@
+{
+  "lastYear": 2025,
+  "currentYear": 2026,
+  "latestMonth": "2026-02",
+  "drivers": {
+    "voice": {
+      "name": "Voice Products",
+      "lastYearActual": 68192769.82,
+      "ytdActual": 13420373.44,
+      "latestMonth": 6554868.84,
+      "yoyGrowth": 18.1
+    },
+    "messaging": {
+      "name": "Messaging Products",
+      "lastYearActual": 73284238.64,
+      "ytdActual": 14811579.52,
+      "latestMonth": 7683180.18,
+      "yoyGrowth": 21.3
+    },
+    "numbers": {
+      "name": "Number Products",
+      "lastYearActual": 34299016.04,
+      "ytdActual": 6527914.46,
+      "latestMonth": 3333779.34,
+      "yoyGrowth": 14.2
+    },
+    "ai": {
+      "name": "AI Products",
+      "lastYearActual": 1722133.46,
+      "ytdActual": 11683.46,
+      "latestMonth": 9500.88,
+      "yoyGrowth": -95.9
+    },
+    "connectivity": {
+      "name": "Connectivity Products",
+      "lastYearActual": 10148325.86,
+      "ytdActual": 2404533.76,
+      "latestMonth": 1171464.24,
+      "yoyGrowth": 42.2
+    },
+    "identity": {
+      "name": "Identity Products",
+      "lastYearActual": 6905809.26,
+      "ytdActual": 874054.24,
+      "latestMonth": 449652.86,
+      "yoyGrowth": -24.1
+    },
+    "storage": {
+      "name": "Storage Products",
+      "lastYearActual": 1734373.52,
+      "ytdActual": 5666.04,
+      "latestMonth": 2740.64,
+      "yoyGrowth": -98.0
+    },
+    "support": {
+      "name": "Support Products",
+      "lastYearActual": 4624982.98,
+      "ytdActual": 640000.0,
+      "latestMonth": 320000.0,
+      "yoyGrowth": -17.0
+    },
+    "other": {
+      "name": "Other Products",
+      "lastYearActual": 13545042.84,
+      "ytdActual": 3362520.2,
+      "latestMonth": 1487258.92,
+      "yoyGrowth": 48.9
+    }
+  },
+  "totals": {
+    "lastYear": 214456692.42,
+    "ytd": 42058325.12,
+    "latestMonth": 21012445.9
+  },
+  "generated_at": "2026-03-13"
+}
