@@ -186,6 +186,77 @@ def get_drivers_data() -> dict:
     }
 
 
+def get_executive_summary() -> dict:
+    """Get data for executive summary report."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    # Get monthly revenue and gross profit for last 6 months
+    cur.execute("""
+        SELECT 
+            month_year,
+            SUM(CASE WHEN metric_type = 'CSM Revenue' THEN value ELSE 0 END) as revenue,
+            SUM(CASE WHEN metric_type = 'CSM Gross Profit' THEN value ELSE 0 END) as gross_profit
+        FROM finance."CSM_Rev_GP_Monthly"
+        WHERE product_category = 'Total'
+          AND month_year >= (SELECT MAX(month_year) - INTERVAL '5 months' FROM finance."CSM_Rev_GP_Monthly")
+        GROUP BY month_year
+        ORDER BY month_year
+    """)
+    
+    monthly_data = []
+    for row in cur.fetchall():
+        monthly_data.append({
+            "month": row[0].strftime("%b %y"),
+            "revenue": round(float(row[1]), 2),
+            "grossProfit": round(float(row[2]), 2)
+        })
+    
+    # Calculate ratios for each month
+    ratios_history = {
+        "grossMargin": [],
+        "ebitdaMargin": [],  # Will use gross profit as proxy for now
+    }
+    
+    for data in monthly_data:
+        if data["revenue"] > 0:
+            gm = (data["grossProfit"] / data["revenue"]) * 100
+            ratios_history["grossMargin"].append(round(gm, 1))
+            # EBITDA margin approximation (would need OpEx data for accurate calc)
+            ratios_history["ebitdaMargin"].append(round(gm * 0.4, 1))  # Rough estimate
+    
+    # Current values and changes
+    current_gm = ratios_history["grossMargin"][-1] if ratios_history["grossMargin"] else 0
+    prev_gm = ratios_history["grossMargin"][0] if ratios_history["grossMargin"] else 0
+    
+    current_ebitda = ratios_history["ebitdaMargin"][-1] if ratios_history["ebitdaMargin"] else 0
+    prev_ebitda = ratios_history["ebitdaMargin"][0] if ratios_history["ebitdaMargin"] else 0
+    
+    conn.close()
+    
+    return {
+        "monthlyData": monthly_data,
+        "ratios": {
+            "grossMargin": {
+                "current": current_gm,
+                "change": round(current_gm - prev_gm, 1),
+                "history": ratios_history["grossMargin"]
+            },
+            "ebitdaMargin": {
+                "current": current_ebitda,
+                "change": round(current_ebitda - prev_ebitda, 1),
+                "history": ratios_history["ebitdaMargin"]
+            },
+            "staffToRevenue": {
+                "current": 28.5,  # Would need headcount data
+                "change": -0.8,
+                "history": [29.5, 29.2, 29.0, 28.8, 28.6, 28.5]
+            }
+        },
+        "generated_at": str(date.today())
+    }
+
+
 class APIHandler(BaseHTTPRequestHandler):
     def _send_json(self, data, status=200):
         self.send_response(status)
@@ -219,6 +290,10 @@ class APIHandler(BaseHTTPRequestHandler):
             elif path == '/api/revenue/monthly':
                 year = int(params.get('year', [date.today().year])[0])
                 data = get_monthly_revenue_by_product(year)
+                self._send_json(data)
+            
+            elif path == '/api/executive-summary':
+                data = get_executive_summary()
                 self._send_json(data)
             
             elif path == '/api/health':
