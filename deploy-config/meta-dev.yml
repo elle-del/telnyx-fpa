@@ -13,7 +13,7 @@ deploy:
 
   service_images:
     fpa-dashboard:
-      version: PENDING_FIRST_BUILD  # Update after first CI build
+      version: 2026.03.17.23.51.d1f5542
 
   # Resources (lightweight static site)
   cpu: 100
