@@ -56,6 +56,19 @@
         .indent { padding-left: 20px !important; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
+        
+        .date-controls { display: flex; align-items: flex-end; gap: 12px; }
+        .date-picker { display: flex; flex-direction: column; gap: 4px; }
+        .date-picker label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .date-picker select { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; color: #e2e8f0; font-size: 14px; cursor: pointer; min-width: 120px; }
+        .date-picker select:hover { border-color: #3b82f6; }
+        .date-picker select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        .apply-btn { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .apply-btn:hover { background: #2563eb; }
+        
+        .period-indicator { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+        .period-indicator .label { color: #94a3b8; font-size: 13px; }
+        .period-indicator .value { color: #f8fafc; font-weight: 600; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -113,33 +126,68 @@
                     <div class="subtitle">Consolidated monthly P&L • Source: Campfire + Postgres</div>
                 </div>
             </div>
+            <div class="date-controls">
+                <div class="date-picker">
+                    <label for="yearSelect">Year</label>
+                    <select id="yearSelect" onchange="updatePeriod()">
+                        <option value="2026" selected>2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                    </select>
+                </div>
+                <div class="date-picker">
+                    <label for="monthSelect">Month</label>
+                    <select id="monthSelect" onchange="updatePeriod()">
+                        <option value="all">All Months</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03" selected>March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <button class="apply-btn" onclick="applyDateFilter()">Apply</button>
+            </div>
+        </div>
+        
+        <div class="period-indicator">
+            <span class="label">Viewing:</span>
+            <span class="value" id="periodDisplay">March 2026</span>
         </div>
         
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-label">2025 Revenue</div>
-                <div class="kpi-value">$172.6M</div>
-                <div class="kpi-change positive">↑ 18.8% YoY</div>
+                <div class="kpi-label">Revenue</div>
+                <div class="kpi-value" id="kpiRevenue">--</div>
+                <div class="kpi-change" id="kpiRevenueChange">--</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">2025 COGS</div>
-                <div class="kpi-value">$78.9M</div>
-                <div class="kpi-change">45.7% of revenue</div>
+                <div class="kpi-label">COGS</div>
+                <div class="kpi-value" id="kpiCogs">--</div>
+                <div class="kpi-change" id="kpiCogsChange">--</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">2025 Gross Profit</div>
-                <div class="kpi-value">$93.7M</div>
-                <div class="kpi-change positive">54.3% margin</div>
+                <div class="kpi-label">Gross Profit</div>
+                <div class="kpi-value" id="kpiGrossProfit">--</div>
+                <div class="kpi-change positive" id="kpiGrossMargin">--</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">2025 OpEx</div>
-                <div class="kpi-value">$86.2M</div>
-                <div class="kpi-change">50.0% of revenue</div>
+                <div class="kpi-label">OpEx</div>
+                <div class="kpi-value" id="kpiOpex">--</div>
+                <div class="kpi-change" id="kpiOpexChange">--</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">2025 Op. Income</div>
-                <div class="kpi-value">$7.5M</div>
-                <div class="kpi-change positive">4.3% margin</div>
+                <div class="kpi-label">Operating Income</div>
+                <div class="kpi-value" id="kpiOpIncome">--</div>
+                <div class="kpi-change" id="kpiOpMargin">--</div>
             </div>
         </div>
         
@@ -180,10 +228,68 @@
     </main>
     
     <script>
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('main').classList.toggle('expanded');
         }
+        
+        function updatePeriod() {
+            // Called on change, but we wait for Apply button
+        }
+        
+        function applyDateFilter() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            
+            let displayText;
+            let labelPrefix;
+            
+            if (month === 'all') {
+                displayText = `Full Year ${year}`;
+                labelPrefix = year;
+            } else {
+                const monthIndex = parseInt(month) - 1;
+                displayText = `${monthNames[monthIndex]} ${year}`;
+                labelPrefix = `${monthShort[monthIndex]} ${year}`;
+            }
+            
+            document.getElementById('periodDisplay').textContent = displayText;
+            
+            // Here you would fetch data for the selected period
+            console.log(`Loading P&L for: ${year}-${month}`);
+            loadPnLData(year, month);
+        }
+        
+        function loadPnLData(year, month) {
+            // Placeholder - will connect to API later
+            // For now, show placeholder values
+            document.getElementById('kpiRevenue').textContent = '--';
+            document.getElementById('kpiRevenueChange').textContent = 'Loading...';
+            document.getElementById('kpiCogs').textContent = '--';
+            document.getElementById('kpiCogsChange').textContent = 'Loading...';
+            document.getElementById('kpiGrossProfit').textContent = '--';
+            document.getElementById('kpiGrossMargin').textContent = 'Loading...';
+            document.getElementById('kpiOpex').textContent = '--';
+            document.getElementById('kpiOpexChange').textContent = 'Loading...';
+            document.getElementById('kpiOpIncome').textContent = '--';
+            document.getElementById('kpiOpMargin').textContent = 'Loading...';
+            
+            // TODO: Fetch from /api/pnl?year=YYYY&month=MM
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current month as default
+            const now = new Date();
+            document.getElementById('yearSelect').value = now.getFullYear();
+            document.getElementById('monthSelect').value = String(now.getMonth() + 1).padStart(2, '0');
+            applyDateFilter();
+        });
         
         new Chart(document.getElementById('pnlChart'), {
             type: 'bar',

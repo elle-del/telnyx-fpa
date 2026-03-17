@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Metrics - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+        
+        .sidebar { width: 220px; background: #0c1222; border-right: 1px solid #1e293b; padding: 16px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 16px 16px; font-size: 18px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #1e293b; margin-bottom: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 12px; }
+        .nav-section-title { padding: 6px 16px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; color: #94a3b8; text-decoration: none; font-size: 13px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 13px; }
+        .nav-icon { width: 18px; font-size: 14px; text-align: center; }
+        
+        .main { margin-left: 220px; flex: 1; padding: 24px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        .refresh-btn { background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .refresh-btn:hover { background: #2563eb; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f8fafc; }
+        .kpi-change { font-size: 14px; margin-top: 4px; }
+        .kpi-change.positive { color: #4ade80; }
+        .kpi-change.negative { color: #f87171; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .card-subtitle { color: #94a3b8; font-size: 12px; font-weight: normal; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        td { font-size: 14px; }
+        tr:hover { background: #0f172a; }
+        .num { text-align: right; font-variant-numeric: tabular-nums; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+        
+        .loading { text-align: center; padding: 40px; color: #94a3b8; }
+        .error { background: #7f1d1d; border: 1px solid #991b1b; padding: 16px; border-radius: 8px; color: #fecaca; }
+        
+        .source-note { margin-top: 16px; padding: 12px; background: #0f172a; border-radius: 6px; font-size: 12px; color: #64748b; }
+        .source-note strong { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+            <a href="saas_metrics.html" class="nav-item active"><span class="nav-icon">📈</span> SaaS Metrics</a>
+            <a href="nrr_report.html" class="nav-item"><span class="nav-icon">🔄</span> NRR Report</a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>📈 SaaS Metrics</h1>
+                <div class="subtitle">Monthly revenue trends and product breakdown</div>
+            </div>
+            <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+        </div>
+        
+        <div class="kpi-grid" id="kpis">
+            <div class="kpi-card">
+                <div class="kpi-label">Current Month Revenue</div>
+                <div class="kpi-value" id="currentRevenue">--</div>
+                <div class="kpi-change" id="currentGrowth">--</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Prior Month Revenue</div>
+                <div class="kpi-value" id="priorRevenue">--</div>
+                <div class="kpi-change" id="priorGrowth">--</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Active Customers</div>
+                <div class="kpi-value" id="activeCustomers">--</div>
+                <div class="kpi-change" id="customerChange">--</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">YTD Revenue</div>
+                <div class="kpi-value" id="ytdRevenue">--</div>
+                <div class="kpi-change" id="ytdGrowth">--</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                Monthly Revenue Trend
+                <span class="card-subtitle">Last 12 months</span>
+            </div>
+            <div id="revenueTable">
+                <div class="loading">Loading data...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                Revenue by Product Category
+                <span class="card-subtitle">Current month breakdown</span>
+            </div>
+            <div id="categoryTable">
+                <div class="loading">Loading data...</div>
+            </div>
+        </div>
+        
+        <div class="source-note">
+            <strong>Data Source:</strong> PostgreSQL (domo_warehouse) → public.mission_control_monthly_revenue, finance.CSM_Rev_GP_Monthly<br>
+            <strong>Refresh:</strong> Real-time query on page load
+        </div>
+    </main>
+    
+    <script>
+        const API_BASE = 'http://fpa-dashboard.query.dev.telnyx.io:8081';
+        
+        function formatCurrency(num) {
+            if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return '$' + (num / 1e3).toFixed(0) + 'K';
+            return '$' + num.toFixed(2);
+        }
+        
+        function formatNumber(num) {
+            return num.toLocaleString();
+        }
+        
+        async function loadData() {
+            try {
+                // Load monthly revenue
+                const revenueRes = await fetch(`${API_BASE}/api/saas/monthly-revenue`);
+                const revenueData = await revenueRes.json();
+                
+                if (revenueData.months && revenueData.months.length > 0) {
+                    const current = revenueData.months[0];
+                    const prior = revenueData.months[1] || {};
+                    
+                    document.getElementById('currentRevenue').textContent = formatCurrency(current.revenue);
+                    document.getElementById('currentGrowth').textContent = (current.momGrowth >= 0 ? '+' : '') + current.momGrowth + '% MoM';
+                    document.getElementById('currentGrowth').className = 'kpi-change ' + (current.momGrowth >= 0 ? 'positive' : 'negative');
+                    
+                    document.getElementById('priorRevenue').textContent = formatCurrency(prior.revenue || 0);
+                    document.getElementById('priorGrowth').textContent = (prior.momGrowth >= 0 ? '+' : '') + (prior.momGrowth || 0) + '% MoM';
+                    document.getElementById('priorGrowth').className = 'kpi-change ' + ((prior.momGrowth || 0) >= 0 ? 'positive' : 'negative');
+                    
+                    document.getElementById('activeCustomers').textContent = formatNumber(current.customers);
+                    const custChange = prior.customers ? ((current.customers - prior.customers) / prior.customers * 100).toFixed(1) : 0;
+                    document.getElementById('customerChange').textContent = (custChange >= 0 ? '+' : '') + custChange + '% MoM';
+                    document.getElementById('customerChange').className = 'kpi-change ' + (custChange >= 0 ? 'positive' : 'negative');
+                    
+                    // YTD calculation
+                    const currentYear = new Date().getFullYear();
+                    const ytd = revenueData.months
+                        .filter(m => m.month.startsWith(currentYear))
+                        .reduce((sum, m) => sum + m.revenue, 0);
+                    document.getElementById('ytdRevenue').textContent = formatCurrency(ytd);
+                    
+                    // Build revenue table
+                    let tableHtml = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="num">Revenue</th>
+                                    <th class="num">Customers</th>
+                                    <th class="num">MoM Growth</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    revenueData.months.slice(0, 12).forEach(m => {
+                        const growthClass = m.momGrowth >= 0 ? 'positive' : 'negative';
+                        tableHtml += `
+                            <tr>
+                                <td>${m.monthLabel}</td>
+                                <td class="num">${formatCurrency(m.revenue)}</td>
+                                <td class="num">${formatNumber(m.customers)}</td>
+                                <td class="num ${growthClass}">${m.momGrowth !== undefined ? (m.momGrowth >= 0 ? '+' : '') + m.momGrowth + '%' : '--'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHtml += '</tbody></table>';
+                    document.getElementById('revenueTable').innerHTML = tableHtml;
+                }
+                
+                // Load category breakdown
+                const catRes = await fetch(`${API_BASE}/api/saas/revenue-by-category`);
+                const catData = await catRes.json();
+                
+                if (catData.byMonth) {
+                    const months = Object.keys(catData.byMonth).sort().reverse();
+                    const currentMonth = months[0];
+                    const catBreakdown = catData.byMonth[currentMonth];
+                    
+                    let catHtml = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product Category</th>
+                                    <th class="num">Revenue</th>
+                                    <th class="num">% of Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    const total = catBreakdown.total || 1;
+                    Object.entries(catBreakdown)
+                        .filter(([k, v]) => k !== 'total')
+                        .sort((a, b) => b[1] - a[1])
+                        .forEach(([cat, rev]) => {
+                            const pct = (rev / total * 100).toFixed(1);
+                            catHtml += `
+                                <tr>
+                                    <td>${cat}</td>
+                                    <td class="num">${formatCurrency(rev)}</td>
+                                    <td class="num">${pct}%</td>
+                                </tr>
+                            `;
+                        });
+                    
+                    catHtml += `
+                            <tr style="font-weight: bold; border-top: 2px solid #334155;">
+                                <td>Total</td>
+                                <td class="num">${formatCurrency(total)}</td>
+                                <td class="num">100%</td>
+                            </tr>
+                        </tbody></table>
+                    `;
+                    document.getElementById('categoryTable').innerHTML = catHtml;
+                }
+                
+            } catch (err) {
+                console.error('Error loading data:', err);
+                document.getElementById('revenueTable').innerHTML = `<div class="error">Error loading data: ${err.message}</div>`;
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>
