@@ -13,7 +13,7 @@ deploy:
 
   service_images:
     fpa-dashboard:
-      version: 2026.03.17.23.51.d1f5542
+      version: 2026.03.17.23.55.42598a7
 
   # Resources (lightweight static site)
   cpu: 100
