@@ -69,6 +69,23 @@
         .period-indicator { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
         .period-indicator .label { color: #94a3b8; font-size: 13px; }
         .period-indicator .value { color: #f8fafc; font-weight: 600; font-size: 15px; }
+        
+        .granularity-toggle { display: flex; flex-direction: column; gap: 4px; }
+        .granularity-toggle label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .toggle-group { display: flex; gap: 0; }
+        .toggle-btn { background: #0f172a; border: 1px solid #334155; padding: 8px 14px; color: #94a3b8; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+        .toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+        .toggle-btn:last-child { border-radius: 0 6px 6px 0; }
+        .toggle-btn:not(:first-child) { border-left: none; }
+        .toggle-btn:hover { background: #1e293b; color: #e2e8f0; }
+        .toggle-btn.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .toggle-btn.active + .toggle-btn { border-left-color: #3b82f6; }
+        
+        .view-toggles { display: flex; gap: 8px; margin-left: 16px; padding-left: 16px; border-left: 1px solid #334155; }
+        .view-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .view-toggle input[type="checkbox"] { width: 16px; height: 16px; accent-color: #3b82f6; cursor: pointer; }
+        .view-toggle span { font-size: 13px; color: #94a3b8; }
+        .view-toggle:hover span { color: #e2e8f0; }
     </style>
 </head>
 <body>
@@ -154,6 +171,28 @@
                         <option value="12">December</option>
                     </select>
                 </div>
+                <div class="granularity-toggle">
+                    <label>View</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-view="monthly" onclick="setGranularity('monthly', this)">Monthly</button>
+                        <button class="toggle-btn" data-view="quarterly" onclick="setGranularity('quarterly', this)">Quarterly</button>
+                        <button class="toggle-btn" data-view="annual" onclick="setGranularity('annual', this)">Annual</button>
+                    </div>
+                </div>
+                <div class="view-toggles">
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showMonthly" checked onchange="updateViewToggles()">
+                        <span>Monthly</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showQuarterly" onchange="updateViewToggles()">
+                        <span>Quarterly</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showAnnual" onchange="updateViewToggles()">
+                        <span>Annual</span>
+                    </label>
+                </div>
                 <button class="apply-btn" onclick="applyDateFilter()">Apply</button>
             </div>
         </div>
@@ -161,6 +200,8 @@
         <div class="period-indicator">
             <span class="label">Viewing:</span>
             <span class="value" id="periodDisplay">March 2026</span>
+            <span class="label" style="margin-left: 24px;">Columns:</span>
+            <span class="value" id="columnsDisplay">Monthly</span>
         </div>
         
         <div class="kpi-grid">
@@ -282,6 +323,46 @@
             // TODO: Fetch from /api/pnl?year=YYYY&month=MM
         }
         
+        // Granularity toggle (single selection)
+        let currentGranularity = 'monthly';
+        
+        function setGranularity(view, btn) {
+            currentGranularity = view;
+            
+            // Update button states
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update columns display
+            const viewLabels = {
+                'monthly': 'Monthly',
+                'quarterly': 'Quarterly', 
+                'annual': 'Annual'
+            };
+            document.getElementById('columnsDisplay').textContent = viewLabels[view];
+            
+            console.log(`Granularity set to: ${view}`);
+            // TODO: Update table columns based on granularity
+        }
+        
+        // View toggles (multi-selection for showing multiple column types)
+        function updateViewToggles() {
+            const showMonthly = document.getElementById('showMonthly').checked;
+            const showQuarterly = document.getElementById('showQuarterly').checked;
+            const showAnnual = document.getElementById('showAnnual').checked;
+            
+            const views = [];
+            if (showMonthly) views.push('Monthly');
+            if (showQuarterly) views.push('Quarterly');
+            if (showAnnual) views.push('Annual');
+            
+            const displayText = views.length > 0 ? views.join(' + ') : 'None selected';
+            document.getElementById('columnsDisplay').textContent = displayText;
+            
+            console.log(`View toggles: Monthly=${showMonthly}, Quarterly=${showQuarterly}, Annual=${showAnnual}`);
+            // TODO: Show/hide table columns based on selections
+        }
+        
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             // Set current month as default
@@ -289,6 +370,7 @@
             document.getElementById('yearSelect').value = now.getFullYear();
             document.getElementById('monthSelect').value = String(now.getMonth() + 1).padStart(2, '0');
             applyDateFilter();
+            updateViewToggles();
         });
         
         new Chart(document.getElementById('pnlChart'), {
