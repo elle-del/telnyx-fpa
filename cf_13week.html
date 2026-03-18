@@ -139,6 +139,42 @@
             </div>
         </div>
         
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="date-controls">
+                <div class="date-picker">
+                    <label for="yearSelect">Year</label>
+                    <select id="yearSelect" onchange="updatePeriod()">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <div class="date-picker">
+                    <label for="weekSelect">Starting Week</label>
+                    <select id="weekSelect" onchange="updatePeriod()">
+                        <option value="w11" selected>Week 11 (Mar 10)</option>
+                        <option value="w12">Week 12 (Mar 17)</option>
+                        <option value="w13">Week 13 (Mar 24)</option>
+                        <option value="w14">Week 14 (Mar 31)</option>
+                    </select>
+                </div>
+                <div class="view-toggles">
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showActuals" checked onchange="updateViewToggles()">
+                        <span>Actuals</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showForecast" checked onchange="updateViewToggles()">
+                        <span>Forecast</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showVariance" onchange="updateViewToggles()">
+                        <span>Variance</span>
+                    </label>
+                </div>
+                <button class="apply-btn" onclick="applyDateFilter()">Apply</button>
+            </div>
+        </div>
 
         <div class="period-indicator">
             <span class="label">Viewing:</span>
@@ -239,15 +275,17 @@
         }
         function updateViewToggles() {
             const views = [];
-            if (document.getElementById('showMonthly').checked) views.push('Monthly');
-            if (document.getElementById('showQuarterly').checked) views.push('Quarterly');
-            if (document.getElementById('showAnnual').checked) views.push('Annual');
+            if (document.getElementById('showActuals').checked) views.push('Actuals');
+            if (document.getElementById('showForecast').checked) views.push('Forecast');
+            if (document.getElementById('showVariance').checked) views.push('Variance');
             document.getElementById('columnsDisplay').textContent = views.length > 0 ? views.join(' + ') : 'None';
+        }
+        function updatePeriod() {
+            // Called on change, but we wait for Apply button
         }
         document.addEventListener('DOMContentLoaded', function() {
             const now = new Date();
             document.getElementById('yearSelect').value = now.getFullYear();
-            document.getElementById('monthSelect').value = String(now.getMonth() + 1).padStart(2, '0');
             applyDateFilter();
             updateViewToggles();
         });

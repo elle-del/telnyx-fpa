@@ -137,6 +137,59 @@
             </div>
         </div>
         
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="date-controls">
+                <div class="date-picker">
+                    <label for="yearSelect">Year</label>
+                    <select id="yearSelect" onchange="updatePeriod()">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+                <div class="date-picker">
+                    <label for="monthSelect">Month</label>
+                    <select id="monthSelect" onchange="updatePeriod()">
+                        <option value="all">All Months</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03" selected>March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="granularity-toggle">
+                    <label>View</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-view="monthly" onclick="setGranularity('monthly', this)">Monthly</button>
+                        <button class="toggle-btn" data-view="quarterly" onclick="setGranularity('quarterly', this)">Quarterly</button>
+                        <button class="toggle-btn" data-view="annual" onclick="setGranularity('annual', this)">Annual</button>
+                    </div>
+                </div>
+                <div class="view-toggles">
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showPrior" onchange="updateViewToggles()">
+                        <span>Prior Period</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showVariance" onchange="updateViewToggles()">
+                        <span>Variance</span>
+                    </label>
+                    <label class="view-toggle">
+                        <input type="checkbox" id="showBudget" onchange="updateViewToggles()">
+                        <span>Budget</span>
+                    </label>
+                </div>
+                <button class="apply-btn" onclick="applyDateFilter()">Apply</button>
+            </div>
+        </div>
 
         <div class="period-indicator">
             <span class="label">Viewing:</span>
@@ -390,6 +443,62 @@
                 },
                 plugins: { legend: { display: false } }
             }
+        });
+        
+        // Month names for display
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        function updatePeriod() {
+            // Called on change, but we wait for Apply button
+        }
+        
+        function applyDateFilter() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            
+            let displayText;
+            if (month === 'all') {
+                displayText = `Full Year ${year}`;
+            } else {
+                const monthIndex = parseInt(month) - 1;
+                displayText = `${monthNames[monthIndex]} ${year}`;
+            }
+            
+            document.getElementById('periodDisplay').textContent = displayText;
+            console.log(`Loading Cash Flow (Indirect) for: ${year}-${month}`);
+        }
+        
+        let currentGranularity = 'monthly';
+        
+        function setGranularity(view, btn) {
+            currentGranularity = view;
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const viewLabels = { 'monthly': 'Monthly', 'quarterly': 'Quarterly', 'annual': 'Annual' };
+            document.getElementById('columnsDisplay').textContent = viewLabels[view];
+            console.log(`Granularity set to: ${view}`);
+        }
+        
+        function updateViewToggles() {
+            const showPrior = document.getElementById('showPrior').checked;
+            const showVariance = document.getElementById('showVariance').checked;
+            const showBudget = document.getElementById('showBudget').checked;
+            
+            const views = ['Current'];
+            if (showPrior) views.push('Prior Period');
+            if (showVariance) views.push('Variance');
+            if (showBudget) views.push('Budget');
+            
+            document.getElementById('columnsDisplay').textContent = views.join(' + ');
+            console.log(`View toggles updated`);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            document.getElementById('yearSelect').value = now.getFullYear();
+            document.getElementById('monthSelect').value = String(now.getMonth() + 1).padStart(2, '0');
+            applyDateFilter();
         });
     </script>
 </body>
