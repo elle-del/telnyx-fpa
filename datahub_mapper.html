@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Mapper - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-actions { display: flex; gap: 8px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn:hover { background: #334155; border-color: #3b82f6; }
+        .btn.primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .btn.primary:hover { background: #2563eb; }
+        .btn.sm { padding: 6px 12px; font-size: 12px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Dataset selector */
+        .dataset-selector { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+        .dataset-selector select { padding: 10px 14px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; min-width: 260px; }
+        .dataset-selector select:focus { outline: none; border-color: #3b82f6; }
+
+        /* Two-panel mapper */
+        .mapper-container { display: grid; grid-template-columns: 1fr 60px 1fr; gap: 0; margin-bottom: 24px; min-height: 400px; }
+        @media (max-width: 900px) { .mapper-container { grid-template-columns: 1fr; } .mapper-connector { canvas: none; } }
+
+        .mapper-panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; }
+        .mapper-panel-header { padding: 14px 16px; background: #0f172a; border-bottom: 1px solid #334155; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center; }
+        .mapper-panel-body { padding: 8px; max-height: 500px; overflow-y: auto; }
+
+        .field-item { canvas: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 4px 0; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; font-size: 13px; }
+        .field-item:hover { background: #334155; }
+        .field-item.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .field-item.mapped { border-color: #4ade80; background: rgba(74, 222, 128, 0.05); }
+        .field-item .field-name { flex: 1; font-weight: 500; color: #f8fafc; }
+        .field-item .field-type { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #0f172a; color: #64748b; }
+        .field-item .field-mapped-to { font-size: 11px; color: #4ade80; }
+
+        /* Connector column */
+        .mapper-connector { canvas: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+        .connect-btn { padding: 10px; border-radius: 50%; background: #3b82f6; border: none; color: white; cursor: pointer; font-size: 18px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .connect-btn:hover { background: #2563eb; transform: scale(1.1); }
+        .connect-btn:disabled { background: #334155; cursor: not-allowed; transform: none; }
+        .unlink-btn { padding: 8px; border-radius: 50%; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: #f87171; cursor: pointer; font-size: 14px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+        .unlink-btn:hover { background: rgba(248, 113, 113, 0.2); }
+
+        /* Mappings list */
+        .mapping-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .mapping-arrow { color: #3b82f6; font-weight: bold; flex-shrink: 0; }
+        .mapping-source { color: #94a3b8; flex: 1; }
+        .mapping-target { color: #f8fafc; font-weight: 500; flex: 1; }
+        .mapping-remove { background: none; border: none; color: #f87171; cursor: pointer; padding: 4px; font-size: 14px; }
+        .mapping-remove:hover { color: #fca5a5; }
+
+        /* Import settings */
+        .import-settings { canvas: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        @media (max-width: 800px) { .import-settings { grid-template-columns: 1fr; } }
+        .form-group { margin-bottom: 0; }
+        .form-group label { canvas: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: 500; }
+        .form-group select, .form-group input { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #3b82f6; }
+
+        /* Preview table */
+        .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .preview-table th, .preview-table td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        .preview-table th { color: #94a3b8; font-weight: 500; font-size: 11px; text-transform: uppercase; background: #0f172a; position: sticky; top: 0; }
+        .preview-table tr:hover { background: rgba(51, 65, 85, 0.5); }
+        .preview-scroll { max-height: 300px; overflow-y: auto; border-radius: 8px; border: 1px solid #334155; }
+
+        .tag { display: inline-flex; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+        .tag.green { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+
+        .loading-overlay { canvas: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; align-items: center; justify-content: center; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: #64748b; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+        .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .alert.info { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .alert.success { background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); color: #4ade80; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Data Hub</div>
+            <a href="datahub.html" class="nav-item"><span class="nav-icon">📊</span> Overview</a>
+            <a href="datahub_sources.html" class="nav-item"><span class="nav-icon">🔌</span> Data Sources</a>
+            <a href="datahub_mapper.html" class="nav-item active"><span class="nav-icon">🔀</span> Field Mapper</a>
+            <a href="datahub_calculated.html" class="nav-item"><span class="nav-icon">🧮</span> Calculated Fields</a>
+            <a href="datahub_departments.html" class="nav-item"><span class="nav-icon">🏢</span> Departments</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Field Mapper</h1>
+                    <div class="subtitle">Map source fields to target schema columns</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="autoMap()" id="autoMapBtn" disabled>🪄 Auto-Map</button>
+                <button class="btn primary" onclick="saveMappings()" id="saveBtn" disabled>💾 Save Mappings</button>
+            </div>
+        </div>
+
+        <div class="dataset-selector">
+            <label style="font-size: 14px; font-weight: 500;">Dataset:</label>
+            <select id="datasetSelect" onchange="loadDatasetMappings()">
+                <option value="">Select a dataset...</option>
+            </select>
+            <span id="mappingStatus" style="font-size: 12px; color: #64748b;"></span>
+        </div>
+
+        <div id="mapperContent" style="display: none;">
+            <div class="mapper-container">
+                <!-- Source fields panel -->
+                <div class="mapper-panel">
+                    <div class="mapper-panel-header">
+                        <span>📄 Source Fields</span>
+                        <span id="sourceFieldCount" style="font-size: 11px; font-weight: 400;">0 fields</span>
+                    </div>
+                    <div class="mapper-panel-body" id="sourceFieldsList"></div>
+                </div>
+
+                <!-- Connector -->
+                <div class="mapper-connector">
+                    <button class="connect-btn" onclick="linkSelected()" id="linkBtn" disabled title="Link selected fields">🔗</button>
+                    <button class="unlink-btn" onclick="unlinkSelected()" id="unlinkBtn" disabled title="Unlink selected mapping">✂️</button>
+                </div>
+
+                <!-- Target fields panel -->
+                <div class="mapper-panel">
+                    <div class="mapper-panel-header">
+                        <span>🎯 Target Schema</span>
+                        <span id="targetFieldCount" style="font-size: 11px; font-weight: 400;">0 fields</span>
+                    </div>
+                    <div class="mapper-panel-body" id="targetFieldsList"></div>
+                </div>
+            </div>
+
+            <!-- Active mappings -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Active Mappings</span>
+                    <span id="mappingCount" style="font-size: 12px; color: #64748b;">0 mappings</span>
+                </div>
+                <div id="mappingsList"></div>
+            </div>
+
+            <!-- Import Settings -->
+            <div class="card">
+                <div class="card-title">Import Settings</div>
+                <div class="import-settings">
+                    <div class="form-group">
+                        <label>Date Format</label>
+                        <select id="dateFormat">
+                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="auto">Auto-detect</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Number Format</label>
+                        <select id="numberFormat">
+                            <option value="standard">1,234.56 (US)</option>
+                            <option value="european">1.234,56 (EU)</option>
+                            <option value="auto">Auto-detect</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>On Conflict</label>
+                        <select id="conflictAction">
+                            <option value="skip">Skip duplicates</option>
+                            <option value="overwrite">Overwrite existing</option>
+                            <option value="append">Always append</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Data Preview</span>
+                    <button class="btn sm" onclick="loadPreview()">🔄 Refresh Preview</button>
+                </div>
+                <div id="previewContainer">
+                    <div class="empty-state">
+                        <div class="icon">👁️</div>
+                        <p>Save mappings and click refresh to preview transformed data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <div class="icon">🔀</div>
+            <p>Select a dataset above to configure field mappings</p>
+        </div>
+    </main>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        // State
+        let datasets = [];
+        let currentDataset = null;
+        let sourceFields = [];
+        let targetFields = [];
+        let mappings = [];
+        let selectedSource = null;
+        let selectedTarget = null;
+
+        // Standard target schema for FP&A
+        const standardTargetSchema = [
+            { name: 'date', type: 'date', description: 'Transaction or period date' },
+            { name: 'account_code', type: 'string', description: 'GL account code' },
+            { name: 'account_name', type: 'string', description: 'GL account name' },
+            { name: 'department', type: 'string', description: 'Department or cost center' },
+            { name: 'amount', type: 'number', description: 'Transaction amount' },
+            { name: 'currency', type: 'string', description: 'Currency code (USD, EUR, etc.)' },
+            { name: 'description', type: 'string', description: 'Transaction description' },
+            { name: 'category', type: 'string', description: 'Revenue/Expense category' },
+            { name: 'subcategory', type: 'string', description: 'Sub-category' },
+            { name: 'entity', type: 'string', description: 'Legal entity' },
+            { name: 'project', type: 'string', description: 'Project or product line' },
+            { name: 'vendor', type: 'string', description: 'Vendor or customer name' },
+            { name: 'reference', type: 'string', description: 'Invoice or reference number' },
+            { name: 'period', type: 'string', description: 'Reporting period (e.g., 2024-Q3)' },
+            { name: 'type', type: 'string', description: 'Actual / Budget / Forecast' }
+        ];
+
+        // Load datasets
+        async function init() {
+            try {
+                const res = await fetch('/api/datahub/datasets');
+                if (!res.ok) throw new Error('Failed to load datasets');
+                datasets = await res.json();
+
+                const select = document.getElementById('datasetSelect');
+                datasets.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = `${d.name} (${d.record_count || 0} records)`;
+                    select.appendChild(opt);
+                });
+
+                // Auto-select from URL params
+                const params = new URLSearchParams(window.location.search);
+                const datasetId = params.get('dataset');
+                if (datasetId) {
+                    select.value = datasetId;
+                    loadDatasetMappings();
+                }
+            } catch (e) {
+                console.error('Error loading datasets:', e);
+            }
+        }
+
+        async function loadDatasetMappings() {
+            const datasetId = document.getElementById('datasetSelect').value;
+            if (!datasetId) {
+                document.getElementById('mapperContent').style.canvas = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            currentDataset = datasets.find(d => d.id === datasetId);
+            document.getElementById('mapperContent').style.canvas = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('autoMapBtn').disabled = false;
+            document.getElementById('saveBtn').disabled = false;
+
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/datasets/${datasetId}/mappings`);
+                if (!res.ok) throw new Error('Failed to load mappings');
+                const data = await res.json();
+
+                sourceFields = data.source_fields || [];
+                mappings = data.mappings || [];
+                targetFields = standardTargetSchema;
+
+                renderSourceFields();
+                renderTargetFields();
+                renderMappings();
+                updateMappingStatus();
+            } catch (e) {
+                console.error('Error loading mappings:', e);
+                // If no mappings exist yet, show empty source fields
+                sourceFields = currentDataset.fields || [];
+                mappings = [];
+                targetFields = standardTargetSchema;
+                renderSourceFields();
+                renderTargetFields();
+                renderMappings();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderSourceFields() {
+            const list = document.getElementById('sourceFieldsList');
+            document.getElementById('sourceFieldCount').textContent = `${sourceFields.length} fields`;
+
+            if (sourceFields.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b; font-size:13px;">No source fields detected</div>';
+                return;
+            }
+
+            list.innerHTML = sourceFields.map((f, i) => {
+                const mapped = mappings.find(m => m.source_field === f.name);
+                return `
+                    <div class="field-item ${selectedSource === i ? 'selected' : ''} ${mapped ? 'mapped' : ''}" onclick="selectSourceField(${i})">
+                        <span class="field-name">${escapeHtml(f.name)}</span>
+                        <span class="field-type">${f.type || 'unknown'}</span>
+                        ${mapped ? `<span class="field-mapped-to">→ ${escapeHtml(mapped.target_field)}</span>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        function renderTargetFields() {
+            const list = document.getElementById('targetFieldsList');
+            document.getElementById('targetFieldCount').textContent = `${targetFields.length} fields`;
+
+            list.innerHTML = targetFields.map((f, i) => {
+                const mapped = mappings.find(m => m.target_field === f.name);
+                return `
+                    <div class="field-item ${selectedTarget === i ? 'selected' : ''} ${mapped ? 'mapped' : ''}" onclick="selectTargetField(${i})" title="${f.description || ''}">
+                        <span class="field-name">${escapeHtml(f.name)}</span>
+                        <span class="field-type">${f.type}</span>
+                        ${mapped ? `<span class="field-mapped-to">← ${escapeHtml(mapped.source_field)}</span>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        function renderMappings() {
+            const container = document.getElementById('mappingsList');
+            document.getElementById('mappingCount').textContent = `${mappings.length} mapping${mappings.length !== 1 ? 's' : ''}`;
+
+            if (mappings.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:20px; font-size:13px;">No mappings yet. Select a source field and target field, then click 🔗 to link them.</div>';
+                return;
+            }
+
+            container.innerHTML = mappings.map((m, i) => `
+                <div class="mapping-row">
+                    <span class="mapping-source">${escapeHtml(m.source_field)}</span>
+                    <span class="mapping-arrow">→</span>
+                    <span class="mapping-target">${escapeHtml(m.target_field)}</span>
+                    ${m.transform ? `<span class="tag">${escapeHtml(m.transform)}</span>` : ''}
+                    <button class="mapping-remove" onclick="removeMapping(${i})" title="Remove mapping">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function selectSourceField(idx) {
+            selectedSource = selectedSource === idx ? null : idx;
+            renderSourceFields();
+            renderTargetFields();
+            updateLinkButton();
+        }
+
+        function selectTargetField(idx) {
+            selectedTarget = selectedTarget === idx ? null : idx;
+            renderSourceFields();
+            renderTargetFields();
+            updateLinkButton();
+        }
+
+        function updateLinkButton() {
+            document.getElementById('linkBtn').disabled = (selectedSource === null || selectedTarget === null);
+        }
+
+        function linkSelected() {
+            if (selectedSource === null || selectedTarget === null) return;
+            const sf = sourceFields[selectedSource];
+            const tf = targetFields[selectedTarget];
+
+            // Remove existing mappings for these fields
+            mappings = mappings.filter(m => m.source_field !== sf.name && m.target_field !== tf.name);
+
+            mappings.push({
+                source_field: sf.name,
+                target_field: tf.name,
+                transform: null
+            });
+
+            selectedSource = null;
+            selectedTarget = null;
+            renderSourceFields();
+            renderTargetFields();
+            renderMappings();
+            updateMappingStatus();
+            updateLinkButton();
+        }
+
+        function unlinkSelected() {
+            if (selectedSource !== null) {
+                const sf = sourceFields[selectedSource];
+                mappings = mappings.filter(m => m.source_field !== sf.name);
+            }
+            if (selectedTarget !== null) {
+                const tf = targetFields[selectedTarget];
+                mappings = mappings.filter(m => m.target_field !== tf.name);
+            }
+            selectedSource = null;
+            selectedTarget = null;
+            renderSourceFields();
+            renderTargetFields();
+            renderMappings();
+            updateMappingStatus();
+        }
+
+        function removeMapping(idx) {
+            mappings.splice(idx, 1);
+            renderSourceFields();
+            renderTargetFields();
+            renderMappings();
+            updateMappingStatus();
+        }
+
+        function updateMappingStatus() {
+            const total = targetFields.length;
+            const mapped = mappings.length;
+            const pct = total > 0 ? Math.round((mapped / total) * 100) : 0;
+            document.getElementById('mappingStatus').textContent = `${mapped}/${total} fields mapped (${pct}%)`;
+        }
+
+        // Auto-map: match by name similarity
+        function autoMap() {
+            const newMappings = [];
+            sourceFields.forEach(sf => {
+                const normalized = sf.name.toLowerCase().replace(/[_\s-]+/g, '');
+                const match = targetFields.find(tf => {
+                    const tNorm = tf.name.toLowerCase().replace(/[_\s-]+/g, '');
+                    return tNorm === normalized ||
+                           normalized.includes(tNorm) ||
+                           tNorm.includes(normalized);
+                });
+                if (match && !newMappings.find(m => m.target_field === match.name)) {
+                    newMappings.push({
+                        source_field: sf.name,
+                        target_field: match.name,
+                        transform: null
+                    });
+                }
+            });
+
+            if (newMappings.length > 0) {
+                mappings = newMappings;
+                renderSourceFields();
+                renderTargetFields();
+                renderMappings();
+                updateMappingStatus();
+            } else {
+                alert('No automatic matches found. Please map fields manually.');
+            }
+        }
+
+        // Save mappings
+        async function saveMappings() {
+            if (!currentDataset) return;
+            showLoading();
+            try {
+                const payload = {
+                    mappings: mappings,
+                    settings: {
+                        date_format: document.getElementById('dateFormat').value,
+                        number_format: document.getElementById('numberFormat').value,
+                        conflict_action: document.getElementById('conflictAction').value
+                    }
+                };
+                const res = await fetch(`/api/datahub/datasets/${currentDataset.id}/mappings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to save mappings');
+
+                const statusEl = document.getElementById('mappingStatus');
+                statusEl.textContent = '✅ Mappings saved!';
+                statusEl.style.color = '#4ade80';
+                setTimeout(() => {
+                    statusEl.style.color = '#64748b';
+                    updateMappingStatus();
+                }, 2000);
+            } catch (e) {
+                alert('Failed to save mappings: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Preview
+        async function loadPreview() {
+            if (!currentDataset) return;
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Loading preview...</div>';
+
+            try {
+                const res = await fetch('/api/datahub/import/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dataset_id: currentDataset.id, limit: 10 })
+                });
+                if (!res.ok) throw new Error('Failed to load preview');
+                const data = await res.json();
+
+                if (!data.rows || data.rows.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>No preview data available</p></div>';
+                    return;
+                }
+
+                const cols = Object.keys(data.rows[0]);
+                container.innerHTML = `
+                    <div class="preview-scroll">
+                        <table class="preview-table">
+                            <thead><tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>
+                            <tbody>${data.rows.map(row => `<tr>${cols.map(c => `<td>${escapeHtml(String(row[c] ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top:8px; font-size:12px; color:#64748b;">Showing ${data.rows.length} of ${data.total || '?'} rows</div>`;
+            } catch (e) {
+                container.innerHTML = `<div class="alert info">Preview not available: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        // Helpers
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        // Init
+        init();
+    </script>
+    <script src="chat_widget.js"></script>
+</body>
+</html>

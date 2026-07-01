@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculated Fields - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; canvas: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { canvas: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { canvas: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-actions { display: flex; gap: 8px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn:hover { background: #334155; border-color: #3b82f6; }
+        .btn.primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .btn.primary:hover { background: #2563eb; }
+        .btn.danger { color: #f87171; border-color: #f87171; background: rgba(248, 113, 113, 0.1); }
+        .btn.danger:hover { background: rgba(248, 113, 113, 0.2); }
+        .btn.sm { padding: 6px 12px; font-size: 12px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Dataset selector */
+        .dataset-bar { canvas: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+        .dataset-bar select { padding: 10px 14px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; min-width: 260px; }
+        .dataset-bar select:focus { outline: none; border-color: #3b82f6; }
+
+        /* Content layout */
+        .content-layout { canvas: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+        @media (max-width: 1000px) { .content-layout { grid-template-columns: 1fr; } }
+
+        /* Field list sidebar */
+        .field-list { max-height: 600px; overflow-y: auto; }
+        .field-card { padding: 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+        .field-card:hover { border-color: #3b82f6; }
+        .field-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .field-card-name { font-weight: 500; font-size: 14px; color: #f8fafc; margin-bottom: 4px; }
+        .field-card-formula { font-size: 12px; color: #64748b; font-family: 'Menlo', 'Monaco', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .field-card-meta { display: flex; gap: 8px; margin-top: 6px; }
+        .field-card-meta .tag { display: inline-flex; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .tag { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+        .tag.number { background: rgba(167, 139, 250, 0.1); color: #a78bfa; }
+        .tag.string { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+        .tag.date { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+        .tag.boolean { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+
+        /* Formula builder */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { canvas: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .form-group .help { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        .formula-input { font-family: 'Menlo', 'Monaco', monospace; font-size: 14px; min-height: 80px; resize: vertical; line-height: 1.6; }
+
+        /* Function palette */
+        .func-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+        .func-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #94a3b8; font-size: 12px; font-family: 'Menlo', 'Monaco', monospace; cursor: pointer; transition: all 0.15s; }
+        .func-btn:hover { border-color: #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.05); }
+
+        /* Field chips for inserting into formula */
+        .field-chips { canvas: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+        .field-chip { padding: 4px 10px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+        .field-chip:hover { border-color: #4ade80; color: #4ade80; }
+
+        /* Live preview */
+        .preview-result { padding: 16px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; font-family: 'Menlo', 'Monaco', monospace; font-size: 13px; min-height: 60px; }
+        .preview-result.error { border-color: rgba(248, 113, 113, 0.3); color: #f87171; }
+        .preview-result.success { border-color: rgba(74, 222, 128, 0.3); }
+
+        /* Audit log */
+        .audit-log { max-height: 200px; overflow-y: auto; }
+        .audit-entry { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(51, 65, 85, 0.5); font-size: 13px; }
+        .audit-time { color: #64748b; white-space: nowrap; min-width: 100px; }
+        .audit-action { color: #94a3b8; }
+        .audit-action .highlight { color: #f8fafc; font-weight: 500; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; align-items: center; justify-content: center; }
+        .loading-overlay.active { canvas: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: #64748b; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Data Hub</div>
+            <a href="datahub.html" class="nav-item"><span class="nav-icon">📊</span> Overview</a>
+            <a href="datahub_sources.html" class="nav-item"><span class="nav-icon">🔌</span> Data Sources</a>
+            <a href="datahub_mapper.html" class="nav-item"><span class="nav-icon">🔀</span> Field Mapper</a>
+            <a href="datahub_calculated.html" class="nav-item active"><span class="nav-icon">🧮</span> Calculated Fields</a>
+            <a href="datahub_departments.html" class="nav-item"><span class="nav-icon">🏢</span> Departments</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Calculated Fields</h1>
+                    <div class="subtitle">Define custom computed columns with formulas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dataset-bar">
+            <label style="font-size: 14px; font-weight: 500;">Dataset:</label>
+            <select id="datasetSelect" onchange="loadCalculatedFields()">
+                <option value="">Select a dataset...</option>
+            </select>
+        </div>
+
+        <div id="mainContent" style="display: none;">
+            <div class="content-layout">
+                <!-- Left: Calculated fields list -->
+                <div>
+                    <div class="card" style="margin-bottom: 16px;">
+                        <div class="card-title">
+                            <span>Calculated Fields</span>
+                            <button class="btn sm primary" onclick="newField()">➕ New</button>
+                        </div>
+                        <div class="field-list" id="fieldList">
+                            <div class="empty-state" style="padding: 24px;">
+                                <p style="font-size: 13px;">No calculated fields yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Formula builder -->
+                <div>
+                    <div class="card" id="builderCard">
+                        <div class="card-title">
+                            <span id="builderTitle">Formula Builder</span>
+                            <div style="canvas: flex; gap: 6px;">
+                                <button class="btn sm danger" onclick="deleteField()" id="deleteBtn" style="display:none;">🗑️ Delete</button>
+                                <button class="btn sm primary" onclick="saveField()" id="saveFieldBtn">💾 Save</button>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="fieldId">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Field Name</label>
+                                <input type="text" id="fieldName" placeholder="e.g., gross_margin_pct">
+                            </div>
+                            <div class="form-group">
+                                <label>Output Type</label>
+                                <select id="outputType">
+                                    <option value="number">Number</option>
+                                    <option value="string">String</option>
+                                    <option value="date">Date</option>
+                                    <option value="boolean">Boolean</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="fieldDesc" placeholder="e.g., Gross margin as a percentage of revenue">
+                        </div>
+
+                        <!-- Available fields -->
+                        <div class="form-group">
+                            <label>Available Fields <span style="font-weight:400; color:#64748b;">(click to insert)</span></label>
+                            <div class="field-chips" id="availableFields">
+                                <span style="color: #64748b; font-size: 12px;">Select a dataset to see available fields</span>
+                            </div>
+                        </div>
+
+                        <!-- Functions palette -->
+                        <div class="form-group">
+                            <label>Functions <span style="font-weight:400; color:#64748b;">(click to insert)</span></label>
+                            <div class="func-palette">
+                                <button class="func-btn" onclick="insertFunc('SUM()')">SUM()</button>
+                                <button class="func-btn" onclick="insertFunc('AVG()')">AVG()</button>
+                                <button class="func-btn" onclick="insertFunc('MIN()')">MIN()</button>
+                                <button class="func-btn" onclick="insertFunc('MAX()')">MAX()</button>
+                                <button class="func-btn" onclick="insertFunc('COUNT()')">COUNT()</button>
+                                <button class="func-btn" onclick="insertFunc('IF(,,)')">IF()</button>
+                                <button class="func-btn" onclick="insertFunc('ROUND(,2)')">ROUND()</button>
+                                <button class="func-btn" onclick="insertFunc('ABS()')">ABS()</button>
+                                <button class="func-btn" onclick="insertFunc('CONCAT(,)')">CONCAT()</button>
+                                <button class="func-btn" onclick="insertFunc('YEAR()')">YEAR()</button>
+                                <button class="func-btn" onclick="insertFunc('MONTH()')">MONTH()</button>
+                                <button class="func-btn" onclick="insertFunc('COALESCE(,0)')">COALESCE()</button>
+                            </div>
+                        </div>
+
+                        <!-- Formula editor -->
+                        <div class="form-group">
+                            <label>Formula</label>
+                            <textarea class="formula-input" id="formulaInput" placeholder="e.g., (revenue - cost_of_goods) / revenue * 100" oninput="validateFormula()"></textarea>
+                            <div class="help">Use field names from your dataset. Supports +, -, *, /, and functions above.</div>
+                        </div>
+
+                        <!-- Live preview -->
+                        <div class="form-group">
+                            <label>Preview Result</label>
+                            <div class="preview-result" id="previewResult">
+                                <span style="color: #64748b;">Enter a formula to see a live preview</span>
+                            </div>
+                        </div>
+
+                        <!-- Format -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Display Format</label>
+                                <select id="canvasFormat">
+                                    <option value="raw">Raw value</option>
+                                    <option value="currency">Currency ($1,234.56)</option>
+                                    <option value="percent">Percentage (12.5%)</option>
+                                    <option value="integer">Integer (1,234)</option>
+                                    <option value="decimal2">2 Decimals (1,234.56)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Null Handling</label>
+                                <select id="nullHandling">
+                                    <option value="zero">Treat as 0</option>
+                                    <option value="null">Propagate NULL</option>
+                                    <option value="skip">Skip row</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audit log -->
+                    <div class="card">
+                        <div class="card-title">Audit Log</div>
+                        <div class="audit-log" id="auditLog">
+                            <div style="text-align: center; color: #64748b; padding: 16px; font-size: 13px;">No audit entries yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="emptyState" class="empty-state">
+            <div class="icon">🧮</div>
+            <p>Select a dataset to manage calculated fields</p>
+        </div>
+    </main>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        // State
+        let datasets = [];
+        let currentDataset = null;
+        let calcFields = [];
+        let activeFieldId = null;
+        let availableFieldNames = [];
+        let validateTimer = null;
+
+        // Init
+        async function init() {
+            try {
+                const res = await fetch('/api/datahub/datasets');
+                if (!res.ok) throw new Error('Failed to load datasets');
+                datasets = await res.json();
+
+                const select = document.getElementById('datasetSelect');
+                datasets.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = `${d.name} (${d.record_count || 0} records)`;
+                    select.appendChild(opt);
+                });
+
+                const params = new URLSearchParams(window.location.search);
+                const dsId = params.get('dataset');
+                if (dsId) { select.value = dsId; loadCalculatedFields(); }
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function loadCalculatedFields() {
+            const dsId = document.getElementById('datasetSelect').value;
+            if (!dsId) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            currentDataset = datasets.find(d => d.id === dsId);
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('emptyState').style.canvas = 'none';
+
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/datasets/${dsId}/calculated`);
+                if (!res.ok) throw new Error('Failed to load calculated fields');
+                const data = await res.json();
+
+                calcFields = data.fields || [];
+                availableFieldNames = data.available_fields || [];
+
+                renderFieldList();
+                renderAvailableFields();
+                if (calcFields.length > 0) {
+                    selectField(calcFields[0].id);
+                } else {
+                    newField();
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                calcFields = [];
+                availableFieldNames = currentDataset.fields?.map(f => f.name) || [];
+                renderFieldList();
+                renderAvailableFields();
+                newField();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderFieldList() {
+            const list = document.getElementById('fieldList');
+            if (calcFields.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#64748b; padding:24px; font-size:13px;">No calculated fields yet. Click "New" to create one.</div>';
+                return;
+            }
+            list.innerHTML = calcFields.map(f => `
+                <div class="field-card ${activeFieldId === f.id ? 'active' : ''}" onclick="selectField('${f.id}')">
+                    <div class="field-card-name">${escapeHtml(f.name)}</div>
+                    <div class="field-card-formula">${escapeHtml(f.formula || 'No formula')}</div>
+                    <div class="field-card-meta">
+                        <span class="tag ${f.output_type || 'number'}">${f.output_type || 'number'}</span>
+                        ${f.canvas_format && f.canvas_format !== 'raw' ? `<span class="tag">${f.display_format}</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAvailableFields() {
+            const container = document.getElementById('availableFields');
+            if (availableFieldNames.length === 0) {
+                container.innerHTML = '<span style="color:#64748b; font-size:12px;">No fields available (import data first)</span>';
+                return;
+            }
+            container.innerHTML = availableFieldNames.map(name =>
+                `<span class="field-chip" onclick="insertFieldRef('${escapeHtml(name)}')">${escapeHtml(name)}</span>`
+            ).join('');
+        }
+
+        function selectField(id) {
+            const field = calcFields.find(f => f.id === id);
+            if (!field) return;
+            activeFieldId = id;
+
+            document.getElementById('fieldId').value = id;
+            document.getElementById('fieldName').value = field.name || '';
+            document.getElementById('outputType').value = field.output_type || 'number';
+            document.getElementById('fieldDesc').value = field.description || '';
+            document.getElementById('formulaInput').value = field.formula || '';
+            document.getElementById('displayFormat').value = field.display_format || 'raw';
+            document.getElementById('nullHandling').value = field.null_handling || 'zero';
+            document.getElementById('deleteBtn').style.display = 'inline-flex';
+            document.getElementById('builderTitle').textContent = 'Edit: ' + (field.name || 'Untitled');
+
+            renderFieldList();
+            validateFormula();
+            loadAuditLog(id);
+        }
+
+        function newField() {
+            activeFieldId = null;
+            document.getElementById('fieldId').value = '';
+            document.getElementById('fieldName').value = '';
+            document.getElementById('outputType').value = 'number';
+            document.getElementById('fieldDesc').value = '';
+            document.getElementById('formulaInput').value = '';
+            document.getElementById('displayFormat').value = 'raw';
+            document.getElementById('nullHandling').value = 'zero';
+            document.getElementById('deleteBtn').style.display = 'none';
+            document.getElementById('builderTitle').textContent = 'New Calculated Field';
+            document.getElementById('previewResult').innerHTML = '<span style="color:#64748b;">Enter a formula to see a live preview</span>';
+            document.getElementById('auditLog').innerHTML = '<div style="text-align:center; color:#64748b; padding:16px; font-size:13px;">Save the field to start tracking changes</div>';
+
+            renderFieldList();
+        }
+
+        function insertFieldRef(name) {
+            const input = document.getElementById('formulaInput');
+            const pos = input.selectionStart;
+            const text = input.value;
+            input.value = text.slice(0, pos) + name + text.slice(pos);
+            input.focus();
+            input.setSelectionRange(pos + name.length, pos + name.length);
+            validateFormula();
+        }
+
+        function insertFunc(func) {
+            const input = document.getElementById('formulaInput');
+            const pos = input.selectionStart;
+            const text = input.value;
+            // Place cursor inside parentheses
+            const cursorOffset = func.indexOf('(') + 1;
+            input.value = text.slice(0, pos) + func + text.slice(pos);
+            input.focus();
+            input.setSelectionRange(pos + cursorOffset, pos + cursorOffset);
+            validateFormula();
+        }
+
+        // Validate formula with debounce
+        function validateFormula() {
+            clearTimeout(validateTimer);
+            validateTimer = setTimeout(doValidate, 500);
+        }
+
+        async function doValidate() {
+            const formula = document.getElementById('formulaInput').value.trim();
+            const preview = document.getElementById('previewResult');
+
+            if (!formula) {
+                preview.className = 'preview-result';
+                preview.innerHTML = '<span style="color:#64748b;">Enter a formula to see a live preview</span>';
+                return;
+            }
+
+            if (!currentDataset) return;
+
+            try {
+                const res = await fetch('/api/datahub/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dataset_id: currentDataset.id,
+                        formula: formula,
+                        preview: true,
+                        limit: 3
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    preview.className = 'preview-result error';
+                    preview.textContent = '❌ ' + (err.error || 'Invalid formula');
+                    return;
+                }
+
+                const data = await res.json();
+                preview.className = 'preview-result success';
+
+                if (data.sample_values && data.sample_values.length > 0) {
+                    const format = document.getElementById('displayFormat').value;
+                    const formatted = data.sample_values.map(v => formatValue(v, format));
+                    preview.innerHTML = `
+                        <div style="color: #4ade80; margin-bottom: 8px;">✅ Valid formula</div>
+                        <div style="color: #94a3b8;">Sample values: ${formatted.map(v => `<span style="color:#f8fafc; font-weight:500;">${v}</span>`).join(', ')}</div>`;
+                } else {
+                    preview.innerHTML = '<div style="color:#4ade80;">✅ Formula syntax is valid</div>';
+                }
+            } catch (e) {
+                // If API not available, do basic client-side validation
+                const knownFields = new Set(availableFieldNames);
+                const tokens = formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+                const builtins = new Set(['SUM','AVG','MIN','MAX','COUNT','IF','ROUND','ABS','CONCAT','YEAR','MONTH','COALESCE']);
+                const unknowns = tokens.filter(t => !knownFields.has(t) && !builtins.has(t));
+
+                if (unknowns.length > 0) {
+                    preview.className = 'preview-result error';
+                    preview.textContent = '⚠️ Unknown references: ' + unknowns.join(', ');
+                } else {
+                    preview.className = 'preview-result success';
+                    preview.innerHTML = '<div style="color:#4ade80;">✅ Formula looks valid (server preview unavailable)</div>';
+                }
+            }
+        }
+
+        function formatValue(v, format) {
+            if (v === null || v === undefined) return 'NULL';
+            switch (format) {
+                case 'currency': return '$' + Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                case 'percent': return Number(v).toFixed(1) + '%';
+                case 'integer': return Math.round(Number(v)).toLocaleString();
+                case 'decimal2': return Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                default: return String(v);
+            }
+        }
+
+        // Save
+        async function saveField() {
+            const name = document.getElementById('fieldName').value.trim();
+            const formula = document.getElementById('formulaInput').value.trim();
+
+            if (!name) { alert('Please enter a field name.'); return; }
+            if (!formula) { alert('Please enter a formula.'); return; }
+            if (!currentDataset) return;
+
+            const payload = {
+                name,
+                formula,
+                output_type: document.getElementById('outputType').value,
+                description: document.getElementById('fieldDesc').value,
+                display_format: document.getElementById('displayFormat').value,
+                null_handling: document.getElementById('nullHandling').value
+            };
+
+            showLoading();
+            try {
+                const url = activeFieldId
+                    ? `/api/datahub/datasets/${currentDataset.id}/calculated/${activeFieldId}`
+                    : `/api/datahub/datasets/${currentDataset.id}/calculated`;
+                const method = activeFieldId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to save field');
+
+                const saved = await res.json();
+                if (!activeFieldId) {
+                    calcFields.push(saved);
+                    activeFieldId = saved.id;
+                } else {
+                    const idx = calcFields.findIndex(f => f.id === activeFieldId);
+                    if (idx >= 0) calcFields[idx] = { ...calcFields[idx], ...payload };
+                }
+
+                renderFieldList();
+                document.getElementById('deleteBtn').style.canvas = 'inline-flex';
+                document.getElementById('builderTitle').textContent = 'Edit: ' + name;
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Delete
+        async function deleteField() {
+            if (!activeFieldId || !currentDataset) return;
+            if (!confirm('Delete this calculated field?')) return;
+
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/datasets/${currentDataset.id}/calculated/${activeFieldId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete');
+                calcFields = calcFields.filter(f => f.id !== activeFieldId);
+                newField();
+                renderFieldList();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Audit log
+        async function loadAuditLog(fieldId) {
+            const container = document.getElementById('auditLog');
+            try {
+                const res = await fetch(`/api/datahub/datasets/${currentDataset.id}/calculated/${fieldId}/audit`);
+                if (!res.ok) throw new Error('No audit data');
+                const entries = await res.json();
+
+                if (!entries.length) {
+                    container.innerHTML = '<div style="text-align:center; color:#64748b; padding:16px; font-size:13px;">No changes recorded yet</div>';
+                    return;
+                }
+
+                container.innerHTML = entries.map(e => `
+                    <div class="audit-entry">
+                        <span class="audit-time">${formatTime(e.timestamp)}</span>
+                        <span class="audit-action">${escapeHtml(e.user || 'System')} <span class="highlight">${escapeHtml(e.action)}</span> ${escapeHtml(e.details || '')}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:16px; font-size:13px;">Audit log unavailable</div>';
+            }
+        }
+
+        // Helpers
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function formatTime(ts) {
+            const d = new Date(ts);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        init();
+    </script>
+    <script src="chat_widget.js"></script>
+</body>
+</html>

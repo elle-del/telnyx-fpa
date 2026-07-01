@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Sources - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { canvas: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { canvas: flex; align-items: center; gap: 16px; }
+        .header-actions { canvas: flex; gap: 8px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn:hover { background: #334155; border-color: #3b82f6; }
+        .btn.primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .btn.primary:hover { background: #2563eb; }
+        .btn.danger { background: rgba(248, 113, 113, 0.1); border-color: #f87171; color: #f87171; }
+        .btn.danger:hover { background: rgba(248, 113, 113, 0.2); }
+        .btn.sm { padding: 6px 12px; font-size: 12px; }
+
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Sources Table */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 11px; }
+        tr:hover { background: rgba(51, 65, 85, 0.5); }
+
+        .status-badge { canvas: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-badge.connected { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+        .status-badge.disconnected { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+        .status-badge.pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-badge.connected .status-dot { background: #4ade80; }
+        .status-badge.disconnected .status-dot { background: #f87171; }
+        .status-badge.pending .status-dot { background: #fbbf24; }
+
+        .type-icon { display: inline-flex; align-items: center; gap: 8px; }
+        .type-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; background: #0f172a; }
+        .type-badge.csv { color: #4ade80; }
+        .type-badge.postgres { color: #3b82f6; }
+        .type-badge.api { color: #a78bfa; }
+        .type-badge.xero { color: #22d3ee; }
+        .type-badge.netsuite { color: #f97316; }
+        .type-badge.quickbooks { color: #34d399; }
+
+        .actions-cell { display: flex; gap: 6px; }
+
+        /* Source type cards grid */
+        .source-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .source-type-card { padding: 16px; background: #0f172a; border: 2px solid #334155; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.15s; }
+        .source-type-card:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .source-type-card.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .source-type-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .source-type-card .label { font-size: 13px; font-weight: 500; }
+
+        /* Form styles */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { canvas: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .form-group .help { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 200; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; width: 560px; max-width: 100%; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; }
+        .modal-close:hover { color: #f8fafc; }
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #334155; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; align-items: center; justify-content: center; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: #64748b; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+        .test-result { margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; }
+        .test-result.success { background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: #4ade80; canvas: block; }
+        .test-result.error { background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.3); color: #f87171; display: block; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Data Hub</div>
+            <a href="datahub.html" class="nav-item"><span class="nav-icon">📊</span> Overview</a>
+            <a href="datahub_sources.html" class="nav-item active"><span class="nav-icon">🔌</span> Data Sources</a>
+            <a href="datahub_mapper.html" class="nav-item"><span class="nav-icon">🔀</span> Field Mapper</a>
+            <a href="datahub_calculated.html" class="nav-item"><span class="nav-icon">🧮</span> Calculated Fields</a>
+            <a href="datahub_departments.html" class="nav-item"><span class="nav-icon">🏢</span> Departments</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Data Sources</h1>
+                    <div class="subtitle">Configure and manage external data connections</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn primary" onclick="openAddSource()">➕ Add Data Source</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">
+                <span>Connected Sources</span>
+                <span style="font-size: 12px; color: #64748b;" id="sourceCount">Loading...</span>
+            </div>
+            <div id="sourcesContainer">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Datasets</th>
+                            <th>Last Sync</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sourcesBody">
+                        <tr><td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">Loading data sources...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Source Modal -->
+    <div class="modal-overlay" id="sourceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Data Source</h2>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+
+            <form id="sourceForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="sourceId">
+
+                <div class="form-group">
+                    <label>Source Name</label>
+                    <input type="text" id="sourceName" required placeholder="e.g., Production Database">
+                </div>
+
+                <div class="form-group">
+                    <label>Source Type</label>
+                    <div class="source-types" id="sourceTypes">
+                        <div class="source-type-card" data-type="csv" onclick="selectType('csv')">
+                            <div class="icon">📄</div>
+                            <div class="label">CSV / Excel</div>
+                        </div>
+                        <div class="source-type-card" data-type="postgres" onclick="selectType('postgres')">
+                            <div class="icon">🐘</div>
+                            <div class="label">PostgreSQL</div>
+                        </div>
+                        <div class="source-type-card" data-type="api" onclick="selectType('api')">
+                            <div class="icon">🔗</div>
+                            <div class="label">REST API</div>
+                        </div>
+                        <div class="source-type-card" data-type="xero" onclick="selectType('xero')">
+                            <div class="icon">📘</div>
+                            <div class="label">Xero</div>
+                        </div>
+                        <div class="source-type-card" data-type="netsuite" onclick="selectType('netsuite')">
+                            <div class="icon">🟠</div>
+                            <div class="label">NetSuite</div>
+                        </div>
+                        <div class="source-type-card" data-type="quickbooks" onclick="selectType('quickbooks')">
+                            <div class="icon">💚</div>
+                            <div class="label">QuickBooks</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="sourceType" required>
+                </div>
+
+                <!-- Type-specific config -->
+                <div id="configFields"></div>
+
+                <div id="testResult" class="test-result"></div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="testConnection()" id="testBtn" style="display:none;">🔌 Test Connection</button>
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn primary">Save Source</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="width: 400px;">
+            <div class="modal-header">
+                <h2>Delete Data Source</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+            </div>
+            <p style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">Are you sure you want to delete <strong id="deleteSourceName"></strong>?</p>
+            <p style="color: #f87171; font-size: 13px;">This will remove the source and may affect associated datasets.</p>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn danger" onclick="confirmDelete()">Delete Source</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        let sources = [];
+        let selectedType = '';
+        let editingId = null;
+        let deletingId = null;
+
+        // Type-specific config templates
+        const typeConfigs = {
+            csv: `
+                <div class="form-group">
+                    <label>Upload Schedule</label>
+                    <select id="cfgSchedule">
+                        <option value="manual">Manual upload</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                    </select>
+                    <div class="help">How often this CSV source is expected to be refreshed</div>
+                </div>
+                <div class="form-group">
+                    <label>Default Delimiter</label>
+                    <select id="cfgDelimiter">
+                        <option value=",">Comma (,)</option>
+                        <option value=";">Semicolon (;)</option>
+                        <option value="tab">Tab</option>
+                    </select>
+                </div>`,
+            postgres: `
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Host</label>
+                        <input type="text" id="cfgHost" placeholder="localhost" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Port</label>
+                        <input type="number" id="cfgPort" value="5432" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Database</label>
+                    <input type="text" id="cfgDatabase" placeholder="finance_db" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="cfgUsername" placeholder="readonly_user" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="cfgPassword" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>SSL Mode</label>
+                    <select id="cfgSsl">
+                        <option value="require">Require</option>
+                        <option value="prefer">Prefer</option>
+                        <option value="disable">Disable</option>
+                    </select>
+                </div>`,
+            api: `
+                <div class="form-group">
+                    <label>Base URL</label>
+                    <input type="url" id="cfgBaseUrl" placeholder="https://api.example.com/v1" required>
+                </div>
+                <div class="form-group">
+                    <label>Authentication</label>
+                    <select id="cfgAuthType" onchange="toggleApiAuth()">
+                        <option value="none">None</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="basic">Basic Auth</option>
+                        <option value="api_key">API Key</option>
+                    </select>
+                </div>
+                <div id="apiAuthFields"></div>
+                <div class="form-group">
+                    <label>Sync Frequency</label>
+                    <select id="cfgFrequency">
+                        <option value="manual">Manual</option>
+                        <option value="hourly">Hourly</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                    </select>
+                </div>`,
+            xero: `
+                <div class="form-group">
+                    <label>Tenant ID</label>
+                    <input type="text" id="cfgTenantId" placeholder="Your Xero tenant ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Client ID</label>
+                    <input type="text" id="cfgClientId" placeholder="OAuth2 client ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Client Secret</label>
+                    <input type="password" id="cfgClientSecret" required>
+                </div>
+                <div class="form-group">
+                    <label>Data to Sync</label>
+                    <select id="cfgDataScope" multiple style="min-height: 80px;">
+                        <option value="pnl" selected>Profit & Loss</option>
+                        <option value="bs" selected>Balance Sheet</option>
+                        <option value="invoices">Invoices</option>
+                        <option value="contacts">Contacts</option>
+                    </select>
+                    <div class="help">Hold Ctrl/Cmd to select multiple</div>
+                </div>`,
+            netsuite: `
+                <div class="form-group">
+                    <label>Account ID</label>
+                    <input type="text" id="cfgAccountId" placeholder="e.g., 1234567" required>
+                </div>
+                <div class="form-group">
+                    <label>Consumer Key</label>
+                    <input type="text" id="cfgConsumerKey" required>
+                </div>
+                <div class="form-group">
+                    <label>Consumer Secret</label>
+                    <input type="password" id="cfgConsumerSecret" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Token ID</label>
+                        <input type="text" id="cfgTokenId" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Token Secret</label>
+                        <input type="password" id="cfgTokenSecret" required>
+                    </div>
+                </div>`,
+            quickbooks: `
+                <div class="form-group">
+                    <label>Company ID (Realm ID)</label>
+                    <input type="text" id="cfgRealmId" placeholder="e.g., 123456789012345" required>
+                </div>
+                <div class="form-group">
+                    <label>Client ID</label>
+                    <input type="text" id="cfgQbClientId" required>
+                </div>
+                <div class="form-group">
+                    <label>Client Secret</label>
+                    <input type="password" id="cfgQbClientSecret" required>
+                </div>
+                <div class="form-group">
+                    <label>Environment</label>
+                    <select id="cfgEnvironment">
+                        <option value="production">Production</option>
+                        <option value="sandbox">Sandbox</option>
+                    </select>
+                </div>`
+        };
+
+        function selectType(type) {
+            selectedType = type;
+            document.getElementById('sourceType').value = type;
+            document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
+            document.querySelector(`.source-type-card[data-type="${type}"]`).classList.add('selected');
+            document.getElementById('configFields').innerHTML = typeConfigs[type] || '';
+            document.getElementById('testBtn').style.display = (type === 'csv') ? 'none' : 'inline-flex';
+            document.getElementById('testResult').className = 'test-result';
+            document.getElementById('testResult').style.display = 'none';
+        }
+
+        function toggleApiAuth() {
+            const authType = document.getElementById('cfgAuthType').value;
+            const container = document.getElementById('apiAuthFields');
+            switch (authType) {
+                case 'bearer':
+                    container.innerHTML = `<div class="form-group"><label>Bearer Token</label><input type="password" id="cfgToken" required></div>`;
+                    break;
+                case 'basic':
+                    container.innerHTML = `<div class="form-row"><div class="form-group"><label>Username</label><input type="text" id="cfgApiUser" required></div><div class="form-group"><label>Password</label><input type="password" id="cfgApiPass" required></div></div>`;
+                    break;
+                case 'api_key':
+                    container.innerHTML = `<div class="form-row"><div class="form-group"><label>Header Name</label><input type="text" id="cfgKeyHeader" value="X-API-Key" required></div><div class="form-group"><label>API Key</label><input type="password" id="cfgApiKey" required></div></div>`;
+                    break;
+                default:
+                    container.innerHTML = '';
+            }
+        }
+
+        // Gather config based on type
+        function gatherConfig() {
+            const config = {};
+            switch (selectedType) {
+                case 'csv':
+                    config.schedule = val('cfgSchedule');
+                    config.delimiter = val('cfgDelimiter');
+                    break;
+                case 'postgres':
+                    config.host = val('cfgHost');
+                    config.port = parseInt(val('cfgPort'));
+                    config.database = val('cfgDatabase');
+                    config.username = val('cfgUsername');
+                    config.password = val('cfgPassword');
+                    config.ssl = val('cfgSsl');
+                    break;
+                case 'api':
+                    config.base_url = val('cfgBaseUrl');
+                    config.auth_type = val('cfgAuthType');
+                    config.frequency = val('cfgFrequency');
+                    if (config.auth_type === 'bearer') config.token = val('cfgToken');
+                    if (config.auth_type === 'basic') { config.username = val('cfgApiUser'); config.password = val('cfgApiPass'); }
+                    if (config.auth_type === 'api_key') { config.key_header = val('cfgKeyHeader'); config.api_key = val('cfgApiKey'); }
+                    break;
+                case 'xero':
+                    config.tenant_id = val('cfgTenantId');
+                    config.client_id = val('cfgClientId');
+                    config.client_secret = val('cfgClientSecret');
+                    const sel = document.getElementById('cfgDataScope');
+                    config.data_scope = sel ? Array.from(sel.selectedOptions).map(o => o.value) : [];
+                    break;
+                case 'netsuite':
+                    config.account_id = val('cfgAccountId');
+                    config.consumer_key = val('cfgConsumerKey');
+                    config.consumer_secret = val('cfgConsumerSecret');
+                    config.token_id = val('cfgTokenId');
+                    config.token_secret = val('cfgTokenSecret');
+                    break;
+                case 'quickbooks':
+                    config.realm_id = val('cfgRealmId');
+                    config.client_id = val('cfgQbClientId');
+                    config.client_secret = val('cfgQbClientSecret');
+                    config.environment = val('cfgEnvironment');
+                    break;
+            }
+            return config;
+        }
+
+        function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+        // Load sources
+        async function loadSources() {
+            try {
+                const res = await fetch('/api/datahub/sources');
+                if (!res.ok) throw new Error('Failed to load sources');
+                sources = await res.json();
+                document.getElementById('sourceCount').textContent = `${sources.length} source${sources.length !== 1 ? 's' : ''}`;
+                renderSources();
+            } catch (e) {
+                console.error('Error loading sources:', e);
+                document.getElementById('sourceCount').textContent = '0 sources';
+                document.getElementById('sourcesBody').innerHTML = '<tr><td colspan="6" class="empty-state"><div class="icon">🔌</div><p>No data sources configured yet. Add one to get started.</p></td></tr>';
+            }
+        }
+
+        function renderSources() {
+            const tbody = document.getElementById('sourcesBody');
+            if (sources.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#64748b; padding:32px;">No data sources yet. Click "Add Data Source" to connect one.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = sources.map(s => `
+                <tr>
+                    <td style="font-weight:500; color:#f8fafc;">${escapeHtml(s.name)}</td>
+                    <td><span class="type-badge ${s.type}">${typeLabel(s.type)}</span></td>
+                    <td><span class="status-badge ${s.status || 'connected'}"><span class="status-dot"></span>${capitalize(s.status || 'connected')}</span></td>
+                    <td>${s.dataset_count || 0}</td>
+                    <td style="color:#94a3b8;">${s.last_sync ? formatTimeAgo(s.last_sync) : 'Never'}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="btn sm" onclick="editSource('${s.id}')">✏️ Edit</button>
+                            <button class="btn sm danger" onclick="promptDelete('${s.id}', '${escapeHtml(s.name)}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function typeLabel(type) {
+            const labels = { csv: '📄 CSV', postgres: '🐘 PostgreSQL', api: '🔗 REST API', xero: '📘 Xero', netsuite: '🟠 NetSuite', quickbooks: '💚 QuickBooks' };
+            return labels[type] || type;
+        }
+
+        // Open modals
+        function openAddSource() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Add Data Source';
+            document.getElementById('sourceForm').reset();
+            document.getElementById('configFields').innerHTML = '';
+            document.getElementById('testBtn').style.canvas = 'none';
+            document.getElementById('testResult').style.display = 'none';
+            selectedType = '';
+            document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        function editSource(id) {
+            const source = sources.find(s => s.id === id);
+            if (!source) return;
+            editingId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Data Source';
+            document.getElementById('sourceId').value = id;
+            document.getElementById('sourceName').value = source.name;
+            selectType(source.type);
+            // Populate config fields
+            if (source.config) {
+                setTimeout(() => {
+                    Object.entries(source.config).forEach(([key, value]) => {
+                        const el = document.getElementById('cfg' + capitalize(key));
+                        if (el) el.value = value;
+                    });
+                }, 50);
+            }
+            document.getElementById('sourceModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('sourceModal').classList.remove('active');
+            editingId = null;
+        }
+
+        // Submit source
+        async function handleSubmit(e) {
+            e.preventDefault();
+            if (!selectedType) { alert('Please select a source type.'); return; }
+
+            const payload = {
+                name: document.getElementById('sourceName').value,
+                type: selectedType,
+                config: gatherConfig()
+            };
+
+            showLoading();
+            try {
+                const url = editingId ? `/api/datahub/sources/${editingId}` : '/api/datahub/sources';
+                const method = editingId ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to save source');
+                closeModal();
+                await loadSources();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Test connection
+        async function testConnection() {
+            const resultEl = document.getElementById('testResult');
+            resultEl.className = 'test-result';
+            resultEl.style.display = 'none';
+
+            if (!selectedType) return;
+
+            const payload = { type: selectedType, config: gatherConfig() };
+
+            try {
+                resultEl.textContent = 'Testing connection...';
+                resultEl.className = 'test-result';
+                resultEl.style.canvas = 'block';
+                resultEl.style.background = 'rgba(59, 130, 246, 0.1)';
+                resultEl.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                resultEl.style.color = '#60a5fa';
+
+                const res = await fetch('/api/datahub/sources/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    resultEl.textContent = '✅ Connection successful!';
+                    resultEl.className = 'test-result success';
+                } else {
+                    resultEl.textContent = '❌ Connection failed: ' + (data.error || 'Unknown error');
+                    resultEl.className = 'test-result error';
+                }
+            } catch (e) {
+                resultEl.textContent = '❌ Test failed: ' + e.message;
+                resultEl.className = 'test-result error';
+            }
+        }
+
+        // Delete
+        function promptDelete(id, name) {
+            deletingId = id;
+            document.getElementById('deleteSourceName').textContent = name;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deletingId = null;
+        }
+        async function confirmDelete() {
+            if (!deletingId) return;
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/sources/${deletingId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete source');
+                closeDeleteModal();
+                await loadSources();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helpers
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+        function formatTimeAgo(dateStr) {
+            const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        // Init
+        loadSources();
+    </script>
+    <script src="chat_widget.js"></script>
+</body>
+</html>

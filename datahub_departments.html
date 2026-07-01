@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-actions { canvas: flex; gap: 8px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .btn:hover { background: #334155; border-color: #3b82f6; }
+        .btn.primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .btn.primary:hover { background: #2563eb; }
+        .btn.danger { color: #f87171; border-color: #f87171; background: rgba(248, 113, 113, 0.1); }
+        .btn.danger:hover { background: rgba(248, 113, 113, 0.2); }
+        .btn.sm { padding: 6px 12px; font-size: 12px; }
+
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Content layout */
+        .content-grid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+        @media (max-width: 1000px) { .content-grid { grid-template-columns: 1fr; } }
+
+        /* Tree styles */
+        .tree { padding: 0; }
+        .tree-node { margin: 0; }
+        .tree-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; margin: 2px 0; }
+        .tree-item:hover { background: #334155; }
+        .tree-item.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .tree-item.drop-target { border-color: #4ade80; background: rgba(74, 222, 128, 0.05); }
+
+        .tree-toggle { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; font-size: 12px; flex-shrink: 0; transition: transform 0.15s; }
+        .tree-toggle.expanded { transform: rotate(90deg); }
+        .tree-toggle.empty { visibility: hidden; }
+
+        .tree-icon { font-size: 16px; flex-shrink: 0; }
+        .tree-name { flex: 1; font-size: 14px; font-weight: 500; color: #f8fafc; }
+        .tree-code { font-size: 11px; color: #64748b; font-family: monospace; background: #0f172a; padding: 2px 6px; border-radius: 4px; }
+        .tree-count { font-size: 11px; color: #94a3b8; background: rgba(148, 163, 184, 0.1); padding: 2px 8px; border-radius: 10px; }
+        .tree-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+        .tree-item:hover .tree-actions { opacity: 1; }
+        .tree-action-btn { background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px; font-size: 12px; border-radius: 4px; }
+        .tree-action-btn:hover { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+
+        .tree-children { padding-left: 28px; }
+        .tree-children.collapsed { display: none; }
+
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { canvas: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 14px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .form-group .help { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        /* Mapping rules */
+        .rule-row { canvas: flex; gap: 8px; align-items: center; padding: 10px; background: #0f172a; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .rule-row input, .rule-row select { padding: 8px 10px; background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; font-size: 13px; }
+        .rule-row .rule-field { flex: 1; }
+        .rule-row .rule-op { width: 100px; }
+        .rule-row .rule-value { flex: 1; }
+        .rule-remove { background: none; border: none; color: #f87171; cursor: pointer; padding: 4px; font-size: 14px; }
+
+        /* Stats badges */
+        .stats-bar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+        .stat-item { padding: 12px 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; text-align: center; min-width: 120px; }
+        .stat-value { font-size: 20px; font-weight: 700; color: #f8fafc; }
+        .stat-label { font-size: 11px; color: #64748b; margin-top: 2px; text-transform: uppercase; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; align-items: center; justify-content: center; }
+        .loading-overlay.active { canvas: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: #64748b; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); z-index: 200; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; width: 400px; max-width: 90vw; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 20px; }
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid #334155; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Data Hub</div>
+            <a href="datahub.html" class="nav-item"><span class="nav-icon">📊</span> Overview</a>
+            <a href="datahub_sources.html" class="nav-item"><span class="nav-icon">🔌</span> Data Sources</a>
+            <a href="datahub_mapper.html" class="nav-item"><span class="nav-icon">🔀</span> Field Mapper</a>
+            <a href="datahub_calculated.html" class="nav-item"><span class="nav-icon">🧮</span> Calculated Fields</a>
+            <a href="datahub_departments.html" class="nav-item active"><span class="nav-icon">🏢</span> Departments</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Departments</h1>
+                    <div class="subtitle">Manage department hierarchy and mapping rules</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="collapseAll()">📁 Collapse All</button>
+                <button class="btn" onclick="expandAll()">📂 Expand All</button>
+                <button class="btn primary" onclick="openAddDept()">➕ Add Department</button>
+            </div>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-value" id="statTotal">--</div>
+                <div class="stat-label">Total Departments</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statTopLevel">--</div>
+                <div class="stat-label">Top-Level</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statMaxDepth">--</div>
+                <div class="stat-label">Max Depth</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statRules">--</div>
+                <div class="stat-label">Mapping Rules</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Left: Tree -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Department Hierarchy</span>
+                    <input type="text" id="searchInput" placeholder="🔍 Search departments..." style="width: 220px; padding: 8px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 13px;" oninput="filterTree()">
+                </div>
+                <div class="tree" id="deptTree">
+                    <div class="empty-state">
+                        <div class="icon">🏢</div>
+                        <p>Loading departments...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Detail panel -->
+            <div id="detailPanel">
+                <div class="card" id="deptDetailCard">
+                    <div class="card-title">
+                        <span id="detailTitle">Department Details</span>
+                    </div>
+
+                    <div id="detailEmpty" class="empty-state" style="padding: 32px;">
+                        <div class="icon">👈</div>
+                        <p>Select a department from the tree to view and edit</p>
+                    </div>
+
+                    <form id="deptForm" style="display:none;" onsubmit="saveDept(event)">
+                        <input type="hidden" id="deptId">
+
+                        <div class="form-group">
+                            <label>Department Name</label>
+                            <input type="text" id="deptName" required placeholder="e.g., Engineering">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Code</label>
+                                <input type="text" id="deptCode" placeholder="e.g., ENG-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Parent Department</label>
+                                <select id="deptParent">
+                                    <option value="">None (Top Level)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Cost Center</label>
+                            <input type="text" id="deptCostCenter" placeholder="e.g., CC-1001">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="deptDesc" rows="2" placeholder="Optional description" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <button type="submit" class="btn primary">💾 Save</button>
+                            <button type="button" class="btn danger" id="deleteDeptBtn" onclick="deleteDept()" style="display:none;">🗑️ Delete</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Mapping Rules -->
+                <div class="card" id="rulesCard" style="display:none;">
+                    <div class="card-title">
+                        <span>Mapping Rules</span>
+                        <button class="btn sm" onclick="addRule()">➕ Add Rule</button>
+                    </div>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Auto-assign transactions to this department based on rules</p>
+                    <div id="rulesContainer"></div>
+                    <button class="btn sm primary" onclick="saveRules()" style="margin-top: 12px;">💾 Save Rules</button>
+                </div>
+
+                <!-- Move controls -->
+                <div class="card" id="moveCard" style="display:none;">
+                    <div class="card-title">Reorder</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn sm" onclick="moveDept('up')">⬆️ Move Up</button>
+                        <button class="btn sm" onclick="moveDept('down')">⬇️ Move Down</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Department Modal -->
+    <div class="modal-overlay" id="addDeptModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add Department</h2>
+                <button class="modal-close" onclick="closeAddDept()">✕</button>
+            </div>
+            <form onsubmit="handleAddDept(event)">
+                <div class="form-group">
+                    <label>Department Name</label>
+                    <input type="text" id="newDeptName" required placeholder="e.g., Product Engineering">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" id="newDeptCode" placeholder="e.g., PE-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Parent</label>
+                        <select id="newDeptParent">
+                            <option value="">None (Top Level)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Cost Center</label>
+                    <input type="text" id="newDeptCostCenter" placeholder="e.g., CC-2001">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeAddDept()">Cancel</button>
+                    <button type="submit" class="btn primary">Add Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        // State
+        let departments = [];
+        let selectedDeptId = null;
+        let expandedNodes = new Set();
+        let rules = [];
+
+        // Init
+        async function init() {
+            await loadDepartments();
+        }
+
+        async function loadDepartments() {
+            showLoading();
+            try {
+                const res = await fetch('/api/datahub/departments');
+                if (!res.ok) throw new Error('Failed to load departments');
+                departments = await res.json();
+                renderTree();
+                updateStats();
+                populateParentSelects();
+            } catch (e) {
+                console.error('Error:', e);
+                departments = [];
+                renderTree();
+                updateStats();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function buildTree(depts, parentId = null) {
+            return depts
+                .filter(d => (d.parent_id || null) === parentId)
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                .map(d => ({
+                    ...d,
+                    children: buildTree(depts, d.id)
+                }));
+        }
+
+        function renderTree() {
+            const tree = document.getElementById('deptTree');
+            const hierarchy = buildTree(departments);
+
+            if (hierarchy.length === 0) {
+                tree.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🏢</div>
+                        <p>No departments yet. Click "Add Department" to create one.</p>
+                    </div>`;
+                return;
+            }
+
+            tree.innerHTML = renderTreeNodes(hierarchy, 0);
+        }
+
+        function renderTreeNodes(nodes, depth) {
+            return nodes.map(node => {
+                const hasChildren = node.children && node.children.length > 0;
+                const isExpanded = expandedNodes.has(node.id);
+                const isSelected = selectedDeptId === node.id;
+
+                return `
+                    <div class="tree-node" data-id="${node.id}" data-name="${escapeHtml(node.name).toLowerCase()}">
+                        <div class="tree-item ${isSelected ? 'selected' : ''}" onclick="selectDept('${node.id}')" data-id="${node.id}">
+                            <span class="tree-toggle ${hasChildren ? (isExpanded ? 'expanded' : '') : 'empty'}"
+                                  onclick="event.stopPropagation(); toggleNode('${node.id}')">▶</span>
+                            <span class="tree-icon">${depth === 0 ? '🏢' : depth === 1 ? '📁' : '📄'}</span>
+                            <span class="tree-name">${escapeHtml(node.name)}</span>
+                            ${node.code ? `<span class="tree-code">${escapeHtml(node.code)}</span>` : ''}
+                            ${hasChildren ? `<span class="tree-count">${node.children.length}</span>` : ''}
+                            <span class="tree-actions">
+                                <button class="tree-action-btn" onclick="event.stopPropagation(); addChildDept('${node.id}')" title="Add child">➕</button>
+                            </span>
+                        </div>
+                        ${hasChildren ? `<div class="tree-children ${isExpanded ? '' : 'collapsed'}" id="children-${node.id}">${renderTreeNodes(node.children, depth + 1)}</div>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        function toggleNode(id) {
+            if (expandedNodes.has(id)) {
+                expandedNodes.delete(id);
+            } else {
+                expandedNodes.add(id);
+            }
+            renderTree();
+        }
+
+        function expandAll() {
+            departments.forEach(d => expandedNodes.add(d.id));
+            renderTree();
+        }
+
+        function collapseAll() {
+            expandedNodes.clear();
+            renderTree();
+        }
+
+        function filterTree() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const nodes = document.querySelectorAll('.tree-node');
+
+            if (!query) {
+                nodes.forEach(n => n.style.canvas = '');
+                return;
+            }
+
+            nodes.forEach(n => {
+                const name = n.getAttribute('data-name') || '';
+                const match = name.includes(query);
+                n.style.display = match ? '' : 'none';
+                if (match) {
+                    // Expand parent nodes
+                    let parent = n.parentElement;
+                    while (parent) {
+                        if (parent.classList && parent.classList.contains('tree-children')) {
+                            parent.classList.remove('collapsed');
+                        }
+                        parent = parent.parentElement;
+                    }
+                }
+            });
+        }
+
+        function selectDept(id) {
+            selectedDeptId = id;
+            const dept = departments.find(d => d.id === id);
+            if (!dept) return;
+
+            document.getElementById('detailEmpty').style.canvas = 'none';
+            document.getElementById('deptForm').style.display = 'block';
+            document.getElementById('rulesCard').style.display = 'block';
+            document.getElementById('moveCard').style.canvas = 'block';
+
+            document.getElementById('deptId').value = dept.id;
+            document.getElementById('deptName').value = dept.name;
+            document.getElementById('deptCode').value = dept.code || '';
+            document.getElementById('deptParent').value = dept.parent_id || '';
+            document.getElementById('deptCostCenter').value = dept.cost_center || '';
+            document.getElementById('deptDesc').value = dept.description || '';
+            document.getElementById('deleteDeptBtn').style.canvas = 'inline-flex';
+            document.getElementById('detailTitle').textContent = dept.name;
+
+            // Load mapping rules
+            rules = dept.mapping_rules || [];
+            renderRules();
+            renderTree();
+        }
+
+        async function saveDept(e) {
+            e.preventDefault();
+            const id = document.getElementById('deptId').value;
+            const payload = {
+                name: document.getElementById('deptName').value,
+                code: document.getElementById('deptCode').value,
+                parent_id: document.getElementById('deptParent').value || null,
+                cost_center: document.getElementById('deptCostCenter').value,
+                description: document.getElementById('deptDesc').value
+            };
+
+            showLoading();
+            try {
+                const url = id ? `/api/datahub/departments/${id}` : '/api/datahub/departments';
+                const method = id ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to save department');
+                await loadDepartments();
+                if (id) selectDept(id);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteDept() {
+            if (!selectedDeptId) return;
+            const dept = departments.find(d => d.id === selectedDeptId);
+            if (!confirm(`Delete "${dept?.name}"? Any child departments will become top-level.`)) return;
+
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/departments/${selectedDeptId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete');
+                selectedDeptId = null;
+                document.getElementById('detailEmpty').style.display = 'block';
+                document.getElementById('deptForm').style.display = 'none';
+                document.getElementById('rulesCard').style.display = 'none';
+                document.getElementById('moveCard').style.display = 'none';
+                await loadDepartments();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Move up/down
+        async function moveDept(direction) {
+            if (!selectedDeptId) return;
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/departments/${selectedDeptId}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ direction })
+                });
+                if (!res.ok) throw new Error('Failed to move');
+                await loadDepartments();
+            } catch (e) {
+                // Client-side reorder fallback
+                const dept = departments.find(d => d.id === selectedDeptId);
+                if (!dept) return;
+                const siblings = departments.filter(d => (d.parent_id || null) === (dept.parent_id || null)).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                const idx = siblings.findIndex(s => s.id === selectedDeptId);
+                const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+                if (swapIdx >= 0 && swapIdx < siblings.length) {
+                    const tmp = siblings[idx].sort_order;
+                    siblings[idx].sort_order = siblings[swapIdx].sort_order;
+                    siblings[swapIdx].sort_order = tmp;
+                    renderTree();
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Mapping rules
+        function renderRules() {
+            const container = document.getElementById('rulesContainer');
+            if (rules.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:16px; font-size:13px;">No mapping rules. Add one to auto-assign transactions.</div>';
+                return;
+            }
+            container.innerHTML = rules.map((r, i) => `
+                <div class="rule-row">
+                    <input class="rule-field" type="text" value="${escapeHtml(r.field || '')}" placeholder="Field name" onchange="updateRule(${i}, 'field', this.value)">
+                    <select class="rule-op" onchange="updateRule(${i}, 'operator', this.value)">
+                        <option value="equals" ${r.operator === 'equals' ? 'selected' : ''}>equals</option>
+                        <option value="contains" ${r.operator === 'contains' ? 'selected' : ''}>contains</option>
+                        <option value="starts_with" ${r.operator === 'starts_with' ? 'selected' : ''}>starts with</option>
+                        <option value="regex" ${r.operator === 'regex' ? 'selected' : ''}>regex</option>
+                    </select>
+                    <input class="rule-value" type="text" value="${escapeHtml(r.value || '')}" placeholder="Value" onchange="updateRule(${i}, 'value', this.value)">
+                    <button class="rule-remove" onclick="removeRule(${i})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addRule() {
+            rules.push({ field: '', operator: 'equals', value: '' });
+            renderRules();
+        }
+
+        function updateRule(idx, key, value) {
+            if (rules[idx]) rules[idx][key] = value;
+        }
+
+        function removeRule(idx) {
+            rules.splice(idx, 1);
+            renderRules();
+        }
+
+        async function saveRules() {
+            if (!selectedDeptId) return;
+            const validRules = rules.filter(r => r.field && r.value);
+            showLoading();
+            try {
+                const res = await fetch(`/api/datahub/departments/${selectedDeptId}/rules`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rules: validRules })
+                });
+                if (!res.ok) throw new Error('Failed to save rules');
+                rules = validRules;
+                renderRules();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Add department (modal)
+        function openAddDept() {
+            populateParentSelects();
+            document.getElementById('addDeptModal').classList.add('active');
+        }
+
+        function closeAddDept() {
+            document.getElementById('addDeptModal').classList.remove('active');
+        }
+
+        function addChildDept(parentId) {
+            document.getElementById('newDeptParent').value = parentId;
+            openAddDept();
+        }
+
+        async function handleAddDept(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('newDeptName').value,
+                code: document.getElementById('newDeptCode').value,
+                parent_id: document.getElementById('newDeptParent').value || null,
+                cost_center: document.getElementById('newDeptCostCenter').value
+            };
+
+            showLoading();
+            try {
+                const res = await fetch('/api/datahub/departments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to add department');
+                closeAddDept();
+                document.getElementById('newDeptName').value = '';
+                document.getElementById('newDeptCode').value = '';
+                document.getElementById('newDeptCostCenter').value = '';
+                if (payload.parent_id) expandedNodes.add(payload.parent_id);
+                await loadDepartments();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helpers
+        function populateParentSelects() {
+            ['deptParent', 'newDeptParent'].forEach(selId => {
+                const select = document.getElementById(selId);
+                const currentVal = select.value;
+                select.innerHTML = '<option value="">None (Top Level)</option>';
+                const flat = flattenTree(buildTree(departments), 0);
+                flat.forEach(({ dept, depth }) => {
+                    if (dept.id !== selectedDeptId) {
+                        const opt = document.createElement('option');
+                        opt.value = dept.id;
+                        opt.textContent = '  '.repeat(depth) + dept.name;
+                        select.appendChild(opt);
+                    }
+                });
+                select.value = currentVal;
+            });
+        }
+
+        function flattenTree(nodes, depth) {
+            let result = [];
+            nodes.forEach(n => {
+                result.push({ dept: n, depth });
+                if (n.children) result = result.concat(flattenTree(n.children, depth + 1));
+            });
+            return result;
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').textContent = departments.length;
+            document.getElementById('statTopLevel').textContent = departments.filter(d => !d.parent_id).length;
+
+            // Calculate max depth
+            function getDepth(id, depth = 0) {
+                const children = departments.filter(d => d.parent_id === id);
+                if (children.length === 0) return depth;
+                return Math.max(...children.map(c => getDepth(c.id, depth + 1)));
+            }
+            const roots = departments.filter(d => !d.parent_id);
+            const maxDepth = roots.length > 0 ? Math.max(...roots.map(r => getDepth(r.id, 1))) : 0;
+            document.getElementById('statMaxDepth').textContent = maxDepth;
+
+            const totalRules = departments.reduce((sum, d) => sum + (d.mapping_rules?.length || 0), 0);
+            document.getElementById('statRules').textContent = totalRules;
+        }
+
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+        function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        init();
+    </script>
+    <script src="chat_widget.js"></script>
+</body>
+</html>
