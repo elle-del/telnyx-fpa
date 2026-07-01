@@ -111,27 +111,11 @@
             </div>
         </div>
 
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">2025 Total Revenue</div>
-                <div class="kpi-value">$172.6M</div>
-                <div class="kpi-change positive">Base: 90% • Variable: 10%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">2026 YTD Revenue</div>
-                <div class="kpi-value">$40.4M</div>
-                <div class="kpi-change positive">↑ 7.8% YoY</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Jan 2026</div>
-                <div class="kpi-value">$17.6M</div>
-                <div class="kpi-change positive">↑ 39.9% vs Jan 2025</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Feb 2026</div>
-                <div class="kpi-value">$17.9M</div>
-                <div class="kpi-change positive">↑ 54.9% vs Feb 2025</div>
-            </div>
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
         </div>
 
         <div class="charts-grid">
@@ -140,64 +124,140 @@
                 <canvas id="revenueChart"></canvas>
             </div>
             <div class="card">
-                <div class="card-title">Revenue Mix (2024)</div>
-                <canvas id="mixChart"></canvas>
+                <div class="card-title" id="mixChartTitle">Revenue Mix</div>
+                <canvas id="mixChart"></display>
             </div>
         </div>
 
         <div class="card">
             <div class="card-title">Monthly Revenue Detail</div>
-            <table>
-                <thead>
-                    <tr><th>Month</th><th>Base</th><th>Variable</th><th>Political</th><th>Total</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Jan 2025</td><td>$11,150,106</td><td>$1,441,185</td><td>$0</td><td>$12,591,292</td></tr>
-                    <tr><td>Feb 2025</td><td>$10,397,459</td><td>$1,179,751</td><td>$0</td><td>$11,577,210</td></tr>
-                    <tr><td>Mar 2025</td><td>$11,888,507</td><td>$1,449,236</td><td>$0</td><td>$13,337,743</td></tr>
-                    <tr><td>Apr 2025</td><td>$11,851,348</td><td>$1,619,050</td><td>$0</td><td>$13,470,397</td></tr>
-                    <tr><td>May 2025</td><td>$11,965,529</td><td>$1,382,806</td><td>$0</td><td>$13,348,335</td></tr>
-                    <tr><td>Jun 2025</td><td>$12,302,397</td><td>$1,191,316</td><td>$0</td><td>$13,493,714</td></tr>
-                    <tr><td>Jul 2025</td><td>$12,530,246</td><td>$1,312,875</td><td>$0</td><td>$13,843,121</td></tr>
-                    <tr><td>Aug 2025</td><td>$12,948,850</td><td>$1,320,749</td><td>$0</td><td>$14,269,599</td></tr>
-                    <tr><td>Sep 2025</td><td>$14,043,027</td><td>$1,516,293</td><td>$0</td><td>$15,559,320</td></tr>
-                    <tr><td>Oct 2025</td><td>$15,685,640</td><td>$1,485,051</td><td>$0</td><td>$17,170,691</td></tr>
-                    <tr><td>Nov 2025</td><td>$14,919,696</td><td>$1,510,906</td><td>$0</td><td>$16,430,602</td></tr>
-                    <tr><td>Dec 2025</td><td>$15,590,035</td><td>$1,891,598</td><td>$0</td><td>$17,481,634</td></tr>
-                    <tr class="total-row"><td>2025 Total</td><td>$155,272,841</td><td>$17,300,817</td><td>$0</td><td>$172,573,658</td></tr>
-                    <tr><td>Jan 2026</td><td>$16,242,254</td><td>$1,369,504</td><td>$0</td><td>$17,611,758</td></tr>
-                    <tr><td>Feb 2026</td><td>$16,386,414</td><td>$1,550,137</td><td>$0</td><td>$17,936,551</td></tr>
-                    <tr class="total-row"><td>2026 YTD</td><td>$37,274,969</td><td>$3,152,236</td><td>$0</td><td>$40,427,205</td></tr>
-                </tbody>
-            </table>
+            <div id="revenueTable"><div style="text-align:center;padding:40px;color:#94a3b8;">Loading data...</div></div>
         </div>
     </main>
 
     <script>
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
+        let revenueChartInstance = null;
+        let mixChartInstance = null;
+
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('main').classList.toggle('expanded');
-            document.querySelector('.sidebar-toggle').classList.toggle('open');
         }
-        
-        new Chart(document.getElementById('revenueChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Jan 25', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan 26', 'Feb'],
-                datasets: [{
-                    label: 'Base', data: [11.15, 10.40, 11.89, 11.85, 11.97, 12.30, 12.53, 12.95, 14.04, 15.69, 14.92, 15.59, 16.24, 16.39], backgroundColor: '#3b82f6', stack: 'stack0'
-                }, {
-                    label: 'Variable', data: [1.44, 1.18, 1.45, 1.62, 1.38, 1.19, 1.31, 1.32, 1.52, 1.49, 1.51, 1.89, 1.37, 1.55], backgroundColor: '#8b5cf6', stack: 'stack0'
-                }]
-            },
-            options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
-        });
 
-        new Chart(document.getElementById('mixChart'), {
-            type: 'doughnut',
-            data: { labels: ['Base Revenue', 'Variable Revenue'], datasets: [{ data: [155.27, 17.30], backgroundColor: ['#3b82f6', '#8b5cf6'], borderWidth: 0 }] },
-            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', padding: 20 } } } }
-        });
+        function formatCurrency(num) {
+            if (Math.abs(num) >= 1e6) return '$' + (num / 1e6).toFixed(1) + 'M';
+            if (Math.abs(num) >= 1e3) return '$' + (num / 1e3).toFixed(0) + 'K';
+            return '$' + num.toFixed(2);
+        }
+        function fmtDollars(n) { return '$' + n.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}); }
+
+        async function loadDashboard() {
+            try {
+                const [revRes, catRes] = await Promise.all([
+                    fetch(API_BASE + '/api/saas/monthly-revenue'),
+                    fetch(API_BASE + '/api/saas/revenue-by-category')
+                ]);
+                const revData = await revRes.json();
+                const catData = await catRes.json();
+                if (revData.error) throw new Error(revData.error);
+                if (catData.error) throw new Error(catData.error);
+
+                const months = revData.months || [];
+                const currentYear = new Date().getFullYear();
+                const lastYear = currentYear - 1;
+
+                const lastYearMonths = months.filter(m => m.month.startsWith(String(lastYear)));
+                const thisYearMonths = months.filter(m => m.month.startsWith(String(currentYear)));
+                const lastYearTotal = lastYearMonths.reduce((s, m) => s + m.revenue, 0);
+                const thisYearTotal = thisYearMonths.reduce((s, m) => s + m.revenue, 0);
+
+                const thisYearMonthNums = thisYearMonths.map(m => m.month.slice(5));
+                const lastYearSameTotal = lastYearMonths.filter(m => thisYearMonthNums.includes(m.month.slice(5))).reduce((s, m) => s + m.revenue, 0);
+                const ytdGrowth = lastYearSameTotal > 0 ? ((thisYearTotal - lastYearSameTotal) / lastYearSameTotal * 100).toFixed(1) : 0;
+
+                const sorted = [...months].sort((a, b) => b.month.localeCompare(a.month));
+                const latest = sorted[0] || {};
+                const prior = sorted[1] || {};
+                const latestYoY = lastYearMonths.find(m => m.month.slice(5) === (latest.month || '').slice(5));
+                const priorYoY = lastYearMonths.find(m => m.month.slice(5) === (prior.month || '').slice(5));
+                const latestGrowth = latestYoY && latestYoY.revenue > 0 ? ((latest.revenue - latestYoY.revenue) / latestYoY.revenue * 100).toFixed(1) : '--';
+                const priorGrowth = priorYoY && priorYoY.revenue > 0 ? ((prior.revenue - priorYoY.revenue) / priorYoY.revenue * 100).toFixed(1) : '--';
+
+                document.getElementById('kpiGrid').innerHTML =
+                    '<div class="kpi-card"><div class="kpi-label">' + lastYear + ' Total Revenue</div><div class="kpi-value">' + formatCurrency(lastYearTotal) + '</div><div class="kpi-change positive">' + lastYearMonths.length + ' months</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">' + currentYear + ' YTD Revenue</div><div class="kpi-value">' + formatCurrency(thisYearTotal) + '</div><div class="kpi-change positive">\u2191 ' + ytdGrowth + '% YoY</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">' + (latest.monthLabel || '--') + '</div><div class="kpi-value">' + formatCurrency(latest.revenue || 0) + '</div><div class="kpi-change positive">' + (latestGrowth !== '--' ? '\u2191 ' + latestGrowth + '% vs ' + lastYear : '--') + '</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">' + (prior.monthLabel || '--') + '</div><div class="kpi-value">' + formatCurrency(prior.revenue || 0) + '</div><div class="kpi-change positive">' + (priorGrowth !== '--' ? '\u2191 ' + priorGrowth + '% vs ' + lastYear : '--') + '</div></div>';
+
+                var catMonths = catData.byMonth ? Object.keys(catData.byMonth).sort() : [];
+                var chartMonths = catMonths.slice(-14);
+                var chartLabels = chartMonths.map(function(m) {
+                    var parts = m.split('-');
+                    var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return names[parseInt(parts[1])-1] + (parts[1] === '01' ? ' ' + parts[0].slice(2) : '');
+                });
+                var categories = catData.categories || [];
+                var colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b', '#ec4899'];
+                var datasets = categories.map(function(cat, i) {
+                    return {
+                        label: cat,
+                        data: chartMonths.map(function(m) { return ((catData.byMonth[m][cat] || 0) / 1e6).toFixed(2); }),
+                        backgroundColor: colors[i % colors.length],
+                        stack: 'stack0'
+                    };
+                });
+
+                if (revenueChartInstance) revenueChartInstance.destroy();
+                revenueChartInstance = new Chart(document.getElementById('revenueChart'), {
+                    type: 'bar', data: { labels: chartLabels, datasets: datasets },
+                    options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: function(v) { return '$' + v + 'M'; } }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+                });
+
+                var mixTotals = {};
+                categories.forEach(function(c) { mixTotals[c] = 0; });
+                catMonths.slice(-12).forEach(function(m) { categories.forEach(function(c) { mixTotals[c] += (catData.byMonth[m][c] || 0); }); });
+                var mixEntries = Object.entries(mixTotals).sort(function(a, b) { return b[1] - a[1]; });
+                var mixLabels = mixEntries.map(function(e) { return e[0]; });
+                var mixValues = mixLabels.map(function(l) { return (mixTotals[l] / 1e6).toFixed(2); });
+                document.getElementById('mixChartTitle').textContent = 'Revenue Mix (Last 12 Months)';
+                if (mixChartInstance) mixChartInstance.destroy();
+                mixChartInstance = new Chart(document.getElementById('mixChart'), {
+                    type: 'doughnut', data: { labels: mixLabels, datasets: [{ data: mixValues, backgroundColor: colors.slice(0, mixLabels.length), borderWidth: 0 }] },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', padding: 20 } } } }
+                });
+
+                var tableHtml = '<table><thead><tr><th>Month</th>';
+                categories.forEach(function(c) { tableHtml += '<th>' + c + '</th>'; });
+                tableHtml += '<th>Total</th></tr></thead><tbody>';
+                var yearGroup = {};
+                catMonths.forEach(function(m) { var y = m.slice(0,4); if(!yearGroup[y]) yearGroup[y]=[]; yearGroup[y].push(m); });
+                Object.keys(yearGroup).sort().forEach(function(year) {
+                    var yMonths = yearGroup[year].sort();
+                    var yearTotals = {}; categories.forEach(function(c) { yearTotals[c] = 0; }); var yearGrand = 0;
+                    yMonths.forEach(function(m) {
+                        var parts = m.split('-');
+                        var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        var rowTotal = 0;
+                        tableHtml += '<tr><td>' + names[parseInt(parts[1])-1] + ' ' + parts[0] + '</td>';
+                        categories.forEach(function(c) { var val = catData.byMonth[m][c] || 0; yearTotals[c] += val; rowTotal += val; tableHtml += '<td>' + fmtDollars(val) + '</td>'; });
+                        yearGrand += rowTotal; tableHtml += '<td>' + fmtDollars(rowTotal) + '</td></tr>';
+                    });
+                    var label = yMonths.length === 12 ? year + ' Total' : year + ' YTD';
+                    tableHtml += '<tr class="total-row"><td>' + label + '</td>';
+                    categories.forEach(function(c) { tableHtml += '<td>' + fmtDollars(yearTotals[c]) + '</td>'; });
+                    tableHtml += '<td>' + fmtDollars(yearGrand) + '</td></tr>';
+                });
+                tableHtml += '</tbody></table>';
+                document.getElementById('revenueTable').innerHTML = tableHtml;
+
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+                document.getElementById('revenueTable').innerHTML = '<div style="background:#7f1d1d;border:1px solid #991b1b;padding:16px;border-radius:8px;color:#fecaca;">Error loading data: ' + err.message + '</div>';
+            }
+        }
+
+        loadDashboard();
     </script>
 </body>
 </html>
