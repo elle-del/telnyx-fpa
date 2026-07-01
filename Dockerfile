@@ -12,8 +12,12 @@ RUN pip install --no-cache-dir psycopg2-binary
 COPY *.html /usr/share/nginx/html/
 COPY data/ /usr/share/nginx/html/data/
 
-# Copy API server
+# Copy API server and AI chat module
 COPY api_server.py /app/api_server.py
+COPY ai_chat.py /app/ai_chat.py
+
+# Copy JS assets
+COPY chat_widget.js /usr/share/nginx/html/chat_widget.js
 
 # Nginx config
 COPY nginx.conf /etc/nginx/http.d/default.conf
