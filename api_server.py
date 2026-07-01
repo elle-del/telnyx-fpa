@@ -3,6 +3,7 @@
 FP&A API Server - Serves data for the FP&A frontend
 """
 
+import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import psycopg2
@@ -10,10 +11,10 @@ from datetime import date, timedelta
 from urllib.parse import urlparse, parse_qs
 
 DB_CONFIG = {
-    "host": "10.5.224.24",
-    "database": "domo_warehouse",
-    "user": "domo",
-    "password": "Q3ugHwECA8ehpq",
+    "host": os.environ.get("FPA_DB_HOST", "10.5.224.24"),
+    "database": os.environ.get("FPA_DB_NAME", "domo_warehouse"),
+    "user": os.environ.get("FPA_DB_USER", "domo"),
+    "password": os.environ.get("FPA_DB_PASSWORD", ""),
 }
 
 
