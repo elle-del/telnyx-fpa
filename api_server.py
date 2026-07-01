@@ -9,6 +9,7 @@ import json
 import psycopg2
 from datetime import date, timedelta
 from urllib.parse import urlparse, parse_qs
+from ai_chat import process_question
 
 DB_CONFIG = {
     "host": os.environ.get("FPA_DB_HOST", "10.5.224.24"),
@@ -409,7 +410,7 @@ class APIHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
     
@@ -458,6 +459,27 @@ class APIHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
     
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length).decode('utf-8') if content_length else '{}'
+            payload = json.loads(body)
+
+            if path == '/api/ai/chat':
+                question = payload.get('question', '').strip()
+                result = process_question(question)
+                self._send_json(result)
+            else:
+                self._send_json({"error": "Not found"}, 404)
+
+        except json.JSONDecodeError:
+            self._send_json({"error": "Invalid JSON"}, 400)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
     def log_message(self, format, *args):
         print(f"[API] {args[0]}")
 
@@ -473,6 +495,7 @@ def run_server(port=8081):
     print("  GET /api/saas/revenue-by-category - Revenue by product category")
     print("  GET /api/saas/nrr - NRR/GRR retention metrics")
     print("  GET /api/health - Health check")
+    print("  POST /api/ai/chat - AI financial assistant")
     server.serve_forever()
 
 
