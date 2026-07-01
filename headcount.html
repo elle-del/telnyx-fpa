@@ -108,80 +108,108 @@
             </div>
         </div>
         
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Total Employees</div>
-                <div class="kpi-value">375</div>
-                <div class="kpi-change positive">↑ 12 this month</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Remote</div>
-                <div class="kpi-value">243</div>
-                <div class="kpi-change">64.8% of workforce</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Office-Based</div>
-                <div class="kpi-value">132</div>
-                <div class="kpi-change">35.2% of workforce</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Departments</div>
-                <div class="kpi-value">24</div>
-                <div class="kpi-change">Avg 15.6 per dept</div>
-            </div>
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
         </div>
-        
+
         <div class="charts-grid">
             <div class="card">
                 <div class="card-title">Headcount by Department</div>
-                <canvas id="deptChart"></canvas>
+                <canvas id="deptChart"></display>
             </div>
             <div class="card">
-                <div class="card-title">Locations</div>
-                <canvas id="locChart"></canvas>
+                <div class="card-title">By Country</div>
+                <display id="locChart"></display>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-title">Department Breakdown</div>
-            <table>
-                <thead><tr><th>Department</th><th>Headcount</th><th>% of Total</th><th></th></tr></thead>
-                <tbody>
-                    <tr><td>NOC</td><td>53</td><td>14.1%</td><td><div class="dept-bar" style="width: 100%"></div></td></tr>
-                    <tr><td>Account Executives</td><td>32</td><td>8.5%</td><td><div class="dept-bar" style="width: 60%"></div></td></tr>
-                    <tr><td>Infrastructure</td><td>20</td><td>5.3%</td><td><div class="dept-bar" style="width: 38%"></div></td></tr>
-                    <tr><td>Python</td><td>20</td><td>5.3%</td><td><div class="dept-bar" style="width: 38%"></div></td></tr>
-                    <tr><td>Sales Development</td><td>18</td><td>4.8%</td><td><div class="dept-bar" style="width: 34%"></div></td></tr>
-                    <tr><td>Elixir</td><td>17</td><td>4.5%</td><td><div class="dept-bar" style="width: 32%"></div></td></tr>
-                    <tr><td>Product Management</td><td>13</td><td>3.5%</td><td><div class="dept-bar" style="width: 25%"></div></td></tr>
-                    <tr><td>Customer Success</td><td>12</td><td>3.2%</td><td><div class="dept-bar" style="width: 23%"></div></td></tr>
-                    <tr><td>Telephony Engineering</td><td>11</td><td>2.9%</td><td><div class="dept-bar" style="width: 21%"></div></td></tr>
-                    <tr><td>Mobile Core</td><td>8</td><td>2.1%</td><td><div class="dept-bar" style="width: 15%"></div></td></tr>
-                </tbody>
-            </table>
+            <div id="deptTable"><div style="color:#94a3b8;padding:16px;">Loading...</div></div>
         </div>
     </main>
     
     <script>
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
+        var deptChartInstance = null;
+        var locChartInstance = null;
+
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('collapsed');
             document.getElementById('main').classList.toggle('expanded');
         }
-        
-        new Chart(document.getElementById('deptChart'), {
-            type: 'bar',
-            data: {
-                labels: ['NOC', 'Account Execs', 'Infrastructure', 'Python', 'Sales Dev', 'Elixir', 'Product', 'CS', 'Telephony', 'Mobile Core'],
-                datasets: [{ label: 'Employees', data: [53, 32, 20, 20, 18, 17, 13, 12, 11, 8], backgroundColor: '#3b82f6' }]
-            },
-            options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { display: false } } }
-        });
-        
-        new Chart(document.getElementById('locChart'), {
-            type: 'doughnut',
-            data: { labels: ['Dublin', 'Amsterdam', 'Denver', 'Chicago', 'Sydney', 'Other'], datasets: [{ data: [63, 29, 26, 12, 8, 237], backgroundColor: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
-        });
+
+        async function loadHeadcount() {
+            try {
+                var res = await fetch(API_BASE + '/api/headcount');
+                var data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                var total = data.total || 0;
+                var remote = data.remote || 0;
+                var office = data.office || 0;
+                var depts = data.departments || 0;
+                var remotePct = total > 0 ? (remote / total * 100).toFixed(1) : '0.0';
+                var officePct = total > 0 ? (office / total * 100).toFixed(1) : '0.0';
+                var avgPerDept = depts > 0 ? (total / depts).toFixed(1) : '0';
+
+                // Employment type breakdown
+                var empTypes = data.byEmploymentType || {};
+                var typeInfo = Object.entries(empTypes).map(function(e) { return e[0].replace('SALARIED_FT','Full-time').replace('CONTRACTOR','Contractor').replace('TEMP','Temp/Intern').replace('HOURLY_PT','Part-time') + ': ' + e[1]; }).join(' • ');
+
+                // KPIs
+                document.getElementById('kpiGrid').innerHTML =
+                    '<div class="kpi-card"><div class="kpi-label">Total Employees</div><div class="kpi-value">' + total + '</div><div class="kpi-change">' + typeInfo + '</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">Remote</div><div class="kpi-value">' + remote + '</div><div class="kpi-change">' + remotePct + '% of workforce</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">Office-Based</div><div class="kpi-value">' + office + '</div><div class="kpi-change">' + officePct + '% of workforce</div></div>' +
+                    '<div class="kpi-card"><div class="kpi-label">Departments</div><div class="kpi-value">' + depts + '</div><div class="kpi-change">Avg ' + avgPerDept + ' per dept</div></div>';
+
+                // Department chart (top 15)
+                var byDept = (data.byDepartment || []).slice(0, 15);
+                var deptLabels = byDept.map(function(d) { return d.name.length > 20 ? d.name.substring(0, 18) + '..' : d.name; });
+                var deptValues = byDept.map(function(d) { return d.count; });
+
+                if (deptChartInstance) deptChartInstance.destroy();
+                deptChartInstance = new Chart(document.getElementById('deptChart'), {
+                    type: 'bar',
+                    data: { labels: deptLabels, datasets: [{ label: 'Employees', data: deptValues, backgroundColor: '#3b82f6' }] },
+                    options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+                });
+
+                // Country chart (top 10 + other)
+                var byCountry = data.byCountry || [];
+                var top10 = byCountry.slice(0, 10);
+                var otherCount = byCountry.slice(10).reduce(function(s, c) { return s + c.count; }, 0);
+                var locLabels = top10.map(function(c) { return c.country; });
+                var locValues = top10.map(function(c) { return c.count; });
+                if (otherCount > 0) { locLabels.push('Other'); locValues.push(otherCount); }
+                var locColors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b', '#ec4899', '#14b8a6', '#a855f7', '#06b6d4', '#94a3b8'];
+
+                if (locChartInstance) locChartInstance.destroy();
+                locChartInstance = new Chart(document.getElementById('locChart'), {
+                    type: 'doughnut',
+                    data: { labels: locLabels, datasets: [{ data: locValues, backgroundColor: locColors.slice(0, locLabels.length) }] },
+                    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
+                });
+
+                // Department table
+                var maxCount = byDept.length > 0 ? byDept[0].count : 1;
+                var tableHtml = '<table><thead><tr><th>Department</th><th>Headcount</th><th>% of Total</th><th></th></tr></thead><tbody>';
+                (data.byDepartment || []).forEach(function(d) {
+                    var pct = total > 0 ? (d.count / total * 100).toFixed(1) : '0.0';
+                    var barWidth = (d.count / maxCount * 100).toFixed(0);
+                    tableHtml += '<tr><td>' + d.name + '</td><td>' + d.count + '</td><td>' + pct + '%</td><td><div class="dept-bar" style="width: ' + barWidth + '%"></div></td></tr>';
+                });
+                tableHtml += '</tbody></table>';
+                document.getElementById('deptTable').innerHTML = tableHtml;
+
+            } catch (err) {
+                console.error('Headcount load error:', err);
+                document.getElementById('kpiGrid').innerHTML = '<div class="kpi-card" style="grid-column: 1 / -1;"><div style="background:#7f1d1d;border:1px solid #991b1b;padding:16px;border-radius:8px;color:#fecaca;">Error loading headcount: ' + err.message + '</div></div>';
+            }
+        }
+
+        loadHeadcount();
     </script>
 </body>
 </html>
