@@ -4,12 +4,20 @@ FP&A API Server - Serves data for the FP&A frontend
 """
 
 import os
+import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import psycopg2
 from datetime import date, timedelta
 from urllib.parse import urlparse, parse_qs
 from ai_chat import process_question
+from datahub import DataHub
+
+# ---------------------------------------------------------------------------
+# Data Hub singleton — initialise SQLite tables on import
+# ---------------------------------------------------------------------------
+_datahub = DataHub()
+_datahub.init_db()
 
 DB_CONFIG = {
     "host": os.environ.get("FPA_DB_HOST", "10.5.224.24"),
@@ -642,10 +650,16 @@ class APIHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
     
+    def _read_body(self) -> dict:
+        """Read and parse JSON request body."""
+        length = int(self.headers.get('Content-Length', 0))
+        raw = self.rfile.read(length).decode('utf-8') if length else '{}'
+        return json.loads(raw)
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
     
@@ -702,6 +716,66 @@ class APIHandler(BaseHTTPRequestHandler):
             
             elif path == '/api/health':
                 self._send_json({"status": "ok"})
+
+            # —— Data Hub GET endpoints ——————————————————
+            elif path == '/api/datahub/sources':
+                self._send_json(_datahub.list_sources())
+
+            elif re.match(r'^/api/datahub/sources/[a-f0-9]+$', path):
+                sid = path.split('/')[-1]
+                src = _datahub.get_source(sid)
+                if src:
+                    self._send_json(src)
+                else:
+                    self._send_json({"error": "Source not found"}, 404)
+
+            elif path == '/api/datahub/datasets':
+                self._send_json(_datahub.list_datasets())
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+$', path):
+                did = path.split('/')[-1]
+                ds = _datahub.get_dataset(did)
+                if ds:
+                    self._send_json(ds)
+                else:
+                    self._send_json({"error": "Dataset not found"}, 404)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/mappings$', path):
+                did = path.split('/')[-2]
+                self._send_json(_datahub.get_mappings(did))
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/calculated-fields$', path):
+                did = path.split('/')[-2]
+                self._send_json(_datahub.list_calculated_fields(did))
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/query$', path):
+                did = path.split('/')[-2]
+                period = params.get('period', [None])[0]
+                limit = int(params.get('limit', [1000])[0])
+                offset = int(params.get('offset', [0])[0])
+                group_by_raw = params.get('group_by', [None])[0]
+                group_by = group_by_raw.split(',') if group_by_raw else None
+                result = _datahub.query_data(
+                    dataset_id=did, period=period,
+                    group_by=group_by, limit=limit, offset=offset,
+                )
+                self._send_json(result)
+
+            elif path == '/api/datahub/departments':
+                self._send_json(_datahub.list_departments())
+
+            elif path == '/api/datahub/departments/tree':
+                self._send_json(_datahub.get_department_tree())
+
+            elif re.match(r'^/api/datahub/departments/[a-f0-9]+/rollup$', path):
+                dept_id = path.split('/')[-2]
+                ds_id = params.get('dataset_id', [None])[0]
+                period = params.get('period', [None])[0]
+                if not ds_id:
+                    self._send_json({"error": "dataset_id required"}, 400)
+                else:
+                    result = _datahub.get_department_rollup(dept_id, ds_id, period)
+                    self._send_json(result)
             
             else:
                 self._send_json({"error": "Not found"}, 404)
@@ -722,11 +796,201 @@ class APIHandler(BaseHTTPRequestHandler):
                 question = payload.get('question', '').strip()
                 result = process_question(question)
                 self._send_json(result)
+
+            # —— Data Hub POST endpoints —————————————————
+            elif path == '/api/datahub/sources':
+                src = _datahub.create_source(
+                    name=payload['name'],
+                    type_=payload['type'],
+                    connection_config=payload.get('connection_config'),
+                )
+                self._send_json(src, 201)
+
+            elif path == '/api/datahub/datasets':
+                ds = _datahub.create_dataset(
+                    name=payload['name'],
+                    description=payload.get('description', ''),
+                    source_id=payload.get('source_id'),
+                    import_mode=payload.get('import_mode', 'replace_all'),
+                    date_field=payload.get('date_field', ''),
+                    archive_monthly=payload.get('archive_monthly', False),
+                    schema_definition=payload.get('schema_definition'),
+                )
+                self._send_json(ds, 201)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/import$', path):
+                did = path.split('/')[-2]
+                csv_content = payload.get('csv_content', '')
+                result = _datahub.import_csv(
+                    dataset_id=did,
+                    file_content=csv_content,
+                    has_header=payload.get('has_header', True),
+                    source_file=payload.get('source_file', ''),
+                    field_mappings=payload.get('field_mappings'),
+                )
+                self._send_json(result)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/preview-csv$', path):
+                csv_content = payload.get('csv_content', '')
+                result = _datahub.preview_csv(
+                    file_content=csv_content,
+                    has_header=payload.get('has_header', True),
+                    max_rows=payload.get('max_rows', 10),
+                )
+                self._send_json(result)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/mappings$', path):
+                did = path.split('/')[-2]
+                mappings = _datahub.save_mappings(did, payload.get('mappings', []))
+                self._send_json(mappings)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/calculated-fields$', path):
+                did = path.split('/')[-2]
+                cf = _datahub.create_calculated_field(
+                    dataset_id=did,
+                    name=payload['name'],
+                    formula=payload['formula'],
+                    formula_type=payload.get('formula_type', 'simple_math'),
+                    depends_on=payload.get('depends_on'),
+                    description=payload.get('description', ''),
+                )
+                self._send_json(cf, 201)
+
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/query$', path):
+                did = path.split('/')[-2]
+                result = _datahub.query_data(
+                    dataset_id=did,
+                    filters=payload.get('filters'),
+                    group_by=payload.get('group_by'),
+                    include_calculated=payload.get('include_calculated', True),
+                    period=payload.get('period'),
+                    limit=payload.get('limit', 1000),
+                    offset=payload.get('offset', 0),
+                )
+                self._send_json(result)
+
+            elif path == '/api/datahub/departments':
+                dept = _datahub.create_department(
+                    name=payload['name'],
+                    parent_id=payload.get('parent_id'),
+                    level=payload.get('level', 0),
+                    mapping_rules=payload.get('mapping_rules'),
+                )
+                self._send_json(dept, 201)
+
+            elif re.match(r'^/api/datahub/departments/[a-f0-9]+/mappings$', path):
+                dept_id = path.split('/')[-2]
+                dm = _datahub.add_department_mapping(
+                    department_id=dept_id,
+                    dataset_id=payload['dataset_id'],
+                    field_name=payload['field_name'],
+                    field_value=payload['field_value'],
+                )
+                self._send_json(dm, 201)
+
             else:
                 self._send_json({"error": "Not found"}, 404)
 
         except json.JSONDecodeError:
             self._send_json({"error": "Invalid JSON"}, 400)
+        except KeyError as e:
+            self._send_json({"error": f"Missing required field: {e}"}, 400)
+        except ValueError as e:
+            self._send_json({"error": str(e)}, 400)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+
+    def do_PUT(self):
+        # Handle PUT requests for Data Hub updates.
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        try:
+            payload = self._read_body()
+
+            # PUT /api/datahub/datasets/<id>/mappings/<mapping_id>
+            if re.match(r'^/api/datahub/datasets/[a-f0-9]+/mappings/[a-f0-9]+$', path):
+                parts = path.split('/')
+                did = parts[-3]
+                mid = parts[-1]
+                result = _datahub.update_mapping(did, mid, payload)
+                if result:
+                    self._send_json(result)
+                else:
+                    self._send_json({"error": "Mapping not found"}, 404)
+
+            # PUT /api/datahub/datasets/<id>/calculated-fields/<cf_id>
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/calculated-fields/[a-f0-9]+$', path):
+                parts = path.split('/')
+                did = parts[-3]
+                cid = parts[-1]
+                result = _datahub.update_calculated_field(did, cid, payload)
+                if result:
+                    self._send_json(result)
+                else:
+                    self._send_json({"error": "Calculated field not found"}, 404)
+
+            # PUT /api/datahub/departments/<id>
+            elif re.match(r'^/api/datahub/departments/[a-f0-9]+$', path):
+                dept_id = path.split('/')[-1]
+                result = _datahub.update_department(dept_id, payload)
+                if result:
+                    self._send_json(result)
+                else:
+                    self._send_json({"error": "Department not found"}, 404)
+
+            else:
+                self._send_json({"error": "Not found"}, 404)
+
+        except json.JSONDecodeError:
+            self._send_json({"error": "Invalid JSON"}, 400)
+        except Exception as e:
+            self._send_json({"error": str(e)}, 500)
+
+    def do_DELETE(self):
+        # Handle DELETE requests for Data Hub resources.
+        parsed = urlparse(self.path)
+        path = parsed.path
+
+        try:
+            # DELETE /api/datahub/sources/<id>
+            if re.match(r'^/api/datahub/sources/[a-f0-9]+$', path):
+                sid = path.split('/')[-1]
+                if _datahub.delete_source(sid):
+                    self._send_json({"deleted": True})
+                else:
+                    self._send_json({"error": "Source not found"}, 404)
+
+            # DELETE /api/datahub/datasets/<id>
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+$', path):
+                did = path.split('/')[-1]
+                if _datahub.delete_dataset(did):
+                    self._send_json({"deleted": True})
+                else:
+                    self._send_json({"error": "Dataset not found"}, 404)
+
+            # DELETE /api/datahub/datasets/<id>/calculated-fields/<cf_id>
+            elif re.match(r'^/api/datahub/datasets/[a-f0-9]+/calculated-fields/[a-f0-9]+$', path):
+                parts = path.split('/')
+                did = parts[-3]
+                cid = parts[-1]
+                if _datahub.delete_calculated_field(did, cid):
+                    self._send_json({"deleted": True})
+                else:
+                    self._send_json({"error": "Calculated field not found"}, 404)
+
+            # DELETE /api/datahub/departments/<id>
+            elif re.match(r'^/api/datahub/departments/[a-f0-9]+$', path):
+                dept_id = path.split('/')[-1]
+                if _datahub.delete_department(dept_id):
+                    self._send_json({"deleted": True})
+                else:
+                    self._send_json({"error": "Department not found"}, 404)
+
+            else:
+                self._send_json({"error": "Not found"}, 404)
+
         except Exception as e:
             self._send_json({"error": str(e)}, 500)
 
@@ -738,17 +1002,43 @@ def run_server(port=8081):
     server = HTTPServer(('0.0.0.0', port), APIHandler)
     print(f"FP&A API Server running on http://localhost:{port}")
     print("Endpoints:")
-    print("  GET /api/drivers - Driver data for forecasting")
-    print("  GET /api/revenue/by-product?year=2025 - Annual revenue by product")
-    print("  GET /api/revenue/monthly?year=2025 - Monthly revenue by product")
-    print("  GET /api/saas/monthly-revenue - SaaS monthly revenue summary")
-    print("  GET /api/saas/revenue-by-category - Revenue by product category")
-    print("  GET /api/saas/nrr - NRR/GRR retention metrics")
-    print("  GET /api/headcount - Employee headcount by dept/entity/location/type")
-    print("  GET /api/revenue/by-region - Revenue by geographic region")
-    print("  GET /api/pnl?year=2025&month=1 - P&L data from CSM_Rev_GP_Monthly")
-    print("  GET /api/health - Health check")
+    print("  GET  /api/drivers - Driver data for forecasting")
+    print("  GET  /api/revenue/by-product?year=2025 - Annual revenue by product")
+    print("  GET  /api/revenue/monthly?year=2025 - Monthly revenue by product")
+    print("  GET  /api/saas/monthly-revenue - SaaS monthly revenue summary")
+    print("  GET  /api/saas/revenue-by-category - Revenue by product category")
+    print("  GET  /api/saas/nrr - NRR/GRR retention metrics")
+    print("  GET  /api/headcount - Employee headcount by dept/entity/location/type")
+    print("  GET  /api/revenue/by-region - Revenue by geographic region")
+    print("  GET  /api/pnl?year=2025&month=1 - P&L data from CSM_Rev_GP_Monthly")
+    print("  GET  /api/health - Health check")
     print("  POST /api/ai/chat - AI financial assistant")
+    print("  --- Data Hub ---")
+    print("  GET    /api/datahub/sources")
+    print("  POST   /api/datahub/sources")
+    print("  GET    /api/datahub/sources/<id>")
+    print("  DELETE /api/datahub/sources/<id>")
+    print("  GET    /api/datahub/datasets")
+    print("  POST   /api/datahub/datasets")
+    print("  GET    /api/datahub/datasets/<id>")
+    print("  DELETE /api/datahub/datasets/<id>")
+    print("  POST   /api/datahub/datasets/<id>/import")
+    print("  POST   /api/datahub/datasets/<id>/preview-csv")
+    print("  GET    /api/datahub/datasets/<id>/mappings")
+    print("  POST   /api/datahub/datasets/<id>/mappings")
+    print("  PUT    /api/datahub/datasets/<id>/mappings/<mid>")
+    print("  GET    /api/datahub/datasets/<id>/calculated-fields")
+    print("  POST   /api/datahub/datasets/<id>/calculated-fields")
+    print("  PUT    /api/datahub/datasets/<id>/calculated-fields/<cid>")
+    print("  DELETE /api/datahub/datasets/<id>/calculated-fields/<cid>")
+    print("  GET/POST /api/datahub/datasets/<id>/query")
+    print("  GET    /api/datahub/departments")
+    print("  GET    /api/datahub/departments/tree")
+    print("  POST   /api/datahub/departments")
+    print("  PUT    /api/datahub/departments/<id>")
+    print("  DELETE /api/datahub/departments/<id>")
+    print("  POST   /api/datahub/departments/<id>/mappings")
+    print("  GET    /api/datahub/departments/<id>/rollup?dataset_id=&period=")
     server.serve_forever()
 
 
