@@ -103,75 +103,124 @@
             <div class="subtitle">Geographic breakdown • Source: Postgres</div>
         </div>
         
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">🇺🇸 North America</div>
-                <div class="kpi-value">$112.4M</div>
-                <div class="kpi-change positive">65.1%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">🇪🇺 Europe</div>
-                <div class="kpi-value">$38.6M</div>
-                <div class="kpi-change">22.4%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">🌏 APAC</div>
-                <div class="kpi-value">$15.2M</div>
-                <div class="kpi-change">8.8%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">🌎 LATAM</div>
-                <div class="kpi-value">$6.4M</div>
-                <div class="kpi-change positive">↑ 45% YoY</div>
-            </div>
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
         </div>
-        
+
         <div class="charts-grid">
             <div class="card">
-                <div class="card-title">Regional Trend</div>
+                <div class="card-title">Monthly Revenue Trend</div>
                 <canvas id="trendChart"></canvas>
             </div>
             <div class="card">
-                <div class="card-title">2025 Distribution</div>
-                <canvas id="mixChart"></canvas>
+                <div class="card-title" id="mixChartTitle">Regional Distribution</div>
+                <display id="mixChart"></display>
             </div>
         </div>
-        
+
         <div class="card">
-            <div class="card-title">Top Countries</div>
-            <div class="regions-grid">
-                <div class="region-card"><span class="region-flag">🇺🇸</span><div class="region-info"><div class="region-name">United States</div><div class="region-revenue">$98.2M (56.9%)</div></div><div class="region-growth">↑ 16%</div></div>
-                <div class="region-card"><span class="region-flag">🇨🇦</span><div class="region-info"><div class="region-name">Canada</div><div class="region-revenue">$14.2M (8.2%)</div></div><div class="region-growth">↑ 22%</div></div>
-                <div class="region-card"><span class="region-flag">🇬🇧</span><div class="region-info"><div class="region-name">United Kingdom</div><div class="region-revenue">$12.4M (7.2%)</div></div><div class="region-growth">↑ 18%</div></div>
-                <div class="region-card"><span class="region-flag">🇩🇪</span><div class="region-info"><div class="region-name">Germany</div><div class="region-revenue">$8.6M (5.0%)</div></div><div class="region-growth">↑ 24%</div></div>
-                <div class="region-card"><span class="region-flag">🇦🇺</span><div class="region-info"><div class="region-name">Australia</div><div class="region-revenue">$6.8M (3.9%)</div></div><div class="region-growth">↑ 32%</div></div>
-                <div class="region-card"><span class="region-flag">🇫🇷</span><div class="region-info"><div class="region-name">France</div><div class="region-revenue">$5.4M (3.1%)</div></div><div class="region-growth">↑ 28%</div></div>
-                <div class="region-card"><span class="region-flag">🇧🇷</span><div class="region-info"><div class="region-name">Brazil</div><div class="region-revenue">$3.8M (2.2%)</div></div><div class="region-growth">↑ 52%</div></div>
-                <div class="region-card"><span class="region-flag">🇳🇱</span><div class="region-info"><div class="region-name">Netherlands</div><div class="region-revenue">$3.2M (1.9%)</div></div><div class="region-growth">↑ 19%</div></div>
+            <div class="card-title">Regional Breakdown</div>
+            <div id="regionCards" class="regions-grid">
+                <div style="color:#94a3b8;padding:16px;">Loading...</div>
             </div>
         </div>
     </main>
     
     <script>
-        new Chart(document.getElementById('trendChart'), {
-            type: 'line',
-            data: {
-                labels: ['Q1 24', 'Q2', 'Q3', 'Q4', 'Q1 25', 'Q2', 'Q3', 'Q4'],
-                datasets: [
-                    { label: 'North America', data: [22.1, 22.8, 23.4, 24.2, 25.8, 27.2, 28.9, 30.5], borderColor: '#3b82f6', backgroundColor: 'transparent', tension: 0.3 },
-                    { label: 'Europe', data: [7.8, 8.1, 8.4, 8.9, 9.2, 9.4, 9.8, 10.2], borderColor: '#8b5cf6', backgroundColor: 'transparent', tension: 0.3 },
-                    { label: 'APAC', data: [2.8, 2.9, 3.1, 3.4, 3.5, 3.7, 3.9, 4.1], borderColor: '#22c55e', backgroundColor: 'transparent', tension: 0.3 },
-                    { label: 'LATAM', data: [0.9, 1.0, 1.1, 1.3, 1.4, 1.5, 1.7, 1.8], borderColor: '#f59e0b', backgroundColor: 'transparent', tension: 0.3 }
-                ]
-            },
-            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
-        });
-        new Chart(document.getElementById('mixChart'), {
-            type: 'doughnut',
-            data: { labels: ['North America', 'Europe', 'APAC', 'LATAM'], datasets: [{ data: [112.4, 38.6, 15.2, 6.4], backgroundColor: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
-        });
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
+        var trendChartInstance = null;
+        var mixChartInstance = null;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        function formatCurrency(num) {
+            if (Math.abs(num) >= 1e6) return '$' + (num / 1e6).toFixed(1) + 'M';
+            if (Math.abs(num) >= 1e3) return '$' + (num / 1e3).toFixed(0) + 'K';
+            return '$' + num.toFixed(2);
+        }
+
+        var regionFlags = {
+            'North America': '\ud83c\uddfa\ud83c\uddf8',
+            'Europe': '\ud83c\uddea\ud83c\uddfa',
+            'Asia Pacific': '\ud83c\uddf3\ud83c\uddff',
+            'South America': '\ud83c\udde7\ud83c\uddf7',
+            'Middle East & Africa': '\ud83c\udde6\ud83c\uddea',
+            'Central America': '\ud83c\uddf3\ud83c\uddee',
+            'Caribbean': '\ud83c\uddf0\ud83c\uddfe',
+            'Other': '\ud83c\udf0d'
+        };
+
+        async function loadRegionData() {
+            try {
+                var res = await fetch(API_BASE + '/api/revenue/by-region');
+                var data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                var byRegion = data.byRegion || [];
+                var totalRevenue = data.totalRevenue || 0;
+                var colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b', '#ec4899', '#14b8a6'];
+
+                // KPIs - top 4 regions
+                var kpiHtml = '';
+                byRegion.slice(0, 4).forEach(function(r) {
+                    var flag = regionFlags[r.region] || '\ud83c\udf0d';
+                    kpiHtml += '<div class="kpi-card"><div class="kpi-label">' + flag + ' ' + r.region + '</div><div class="kpi-value">' + formatCurrency(r.estimatedRevenue) + '</div><div class="kpi-change">' + r.headcountPct + '% (HC: ' + r.headcount + ')</div></div>';
+                });
+                document.getElementById('kpiGrid').innerHTML = kpiHtml;
+
+                // Monthly revenue trend chart
+                var monthlyTotal = data.monthlyTotal || [];
+                var monthLabels = monthlyTotal.map(function(m) {
+                    var parts = m.month.split('-');
+                    var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return names[parseInt(parts[1])-1];
+                });
+                var monthValues = monthlyTotal.map(function(m) { return (m.revenue / 1e6).toFixed(2); });
+
+                if (trendChartInstance) trendChartInstance.destroy();
+                trendChartInstance = new Chart(document.getElementById('trendChart'), {
+                    type: 'line',
+                    data: { labels: monthLabels, datasets: [{ label: 'Total Revenue', data: monthValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.3 }] },
+                    options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: function(v) { return '$' + v + 'M'; } }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+                });
+
+                // Distribution doughnut
+                var mixLabels = byRegion.map(function(r) { return r.region; });
+                var mixValues = byRegion.map(function(r) { return (r.estimatedRevenue / 1e6).toFixed(2); });
+                document.getElementById('mixChartTitle').textContent = data.year + ' Regional Distribution';
+
+                if (mixChartInstance) mixChartInstance.destroy();
+                mixChartInstance = new Chart(document.getElementById('mixChart'), {
+                    type: 'doughnut',
+                    data: { labels: mixLabels, datasets: [{ data: mixValues, backgroundColor: colors.slice(0, mixLabels.length) }] },
+                    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
+                });
+
+                // Region cards
+                var cardsHtml = '';
+                byRegion.forEach(function(r) {
+                    var flag = regionFlags[r.region] || '\ud83c\udf0d';
+                    cardsHtml += '<div class="region-card"><span class="region-flag">' + flag + '</span><div class="region-info"><div class="region-name">' + r.region + '</div><div class="region-revenue">' + formatCurrency(r.estimatedRevenue) + ' (' + r.headcountPct + '%)</div></div><div class="region-growth">HC: ' + r.headcount + '</div></div>';
+                });
+                document.getElementById('regionCards').innerHTML = cardsHtml;
+
+                if (data.note) {
+                    var noteEl = document.createElement('div');
+                    noteEl.style.cssText = 'color:#94a3b8;font-size:12px;padding:8px 0;font-style:italic;';
+                    noteEl.textContent = data.note;
+                    document.getElementById('regionCards').appendChild(noteEl);
+                }
+
+            } catch (err) {
+                console.error('Revenue by region load error:', err);
+                document.getElementById('kpiGrid').innerHTML = '<div class="kpi-card" style="grid-column: 1 / -1;"><div style="background:#7f1d1d;border:1px solid #991b1b;padding:16px;border-radius:8px;color:#fecaca;">Error loading region data: ' + err.message + '</div></div>';
+            }
+        }
+
+        loadRegionData();
     </script>
-<script>function toggleSidebar() { document.getElementById("sidebar").classList.toggle("collapsed"); document.getElementById("main").classList.toggle("expanded"); document.querySelector(".sidebar-toggle").classList.toggle("open"); }</script>
 </body>
 </html>
