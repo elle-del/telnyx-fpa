@@ -154,6 +154,16 @@
             </div>
         </div>
         
+        
+        <div class="card">
+            <div class="card-title">
+                Retention Metrics
+                <span class="card-subtitle">Net Revenue Retention (12-month cohort)</span>
+            </div>
+            <div id="nrrMetrics">
+                <div class="loading">Loading NRR data...</div>
+            </div>
+        </div>
         <div class="source-note">
             <strong>Data Source:</strong> PostgreSQL (domo_warehouse) → public.mission_control_monthly_revenue, finance.CSM_Rev_GP_Monthly<br>
             <strong>Refresh:</strong> Real-time query on page load
@@ -161,7 +171,7 @@
     </main>
     
     <script>
-        const API_BASE = 'http://fpa-dashboard.query.dev.telnyx.io:8081';
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
         
         function formatCurrency(num) {
             if (num >= 1e6) return '$' + (num / 1e6).toFixed(2) + 'M';
@@ -280,7 +290,33 @@
                     document.getElementById('categoryTable').innerHTML = catHtml;
                 }
                 
-            } catch (err) {
+            
+                // Load NRR metrics
+                try {
+                    var nrrRes = await fetch(API_BASE + '/api/saas/nrr');
+                    var nrrData = await nrrRes.json();
+                    
+                    if (!nrrData.error) {
+                        var nrrHtml = '<table><thead><tr><th>Metric</th><th class="num">Value</th></tr></thead><tbody>';
+                        nrrHtml += '<tr><td>Net Revenue Retention (NRR)</td><td class="num" style="color:' + (nrrData.nrr >= 100 ? '#4ade80' : '#f87171') + ';font-weight:bold;">' + nrrData.nrr + '%</td></tr>';
+                        nrrHtml += '<tr><td>Gross Revenue Retention (GRR)</td><td class="num">' + nrrData.grr + '%</td></tr>';
+                        nrrHtml += '<tr><td>Logo Retention</td><td class="num">' + nrrData.logoRetention + '%</td></tr>';
+                        nrrHtml += '<tr><td>Base Period Customers</td><td class="num">' + nrrData.baseCustomers.toLocaleString() + '</td></tr>';
+                        nrrHtml += '<tr><td>Retained Customers</td><td class="num">' + nrrData.retainedCustomers.toLocaleString() + '</td></tr>';
+                        nrrHtml += '<tr><td>Churned Customers</td><td class="num" style="color:#f87171;">' + nrrData.churnedCustomers.toLocaleString() + '</td></tr>';
+                        nrrHtml += '<tr><td>Base Period Revenue</td><td class="num">' + formatCurrency(nrrData.baseRevenue) + '</td></tr>';
+                        nrrHtml += '<tr><td>Current Period Revenue</td><td class="num">' + formatCurrency(nrrData.currentRevenue) + '</td></tr>';
+                        nrrHtml += '</tbody></table>';
+                        document.getElementById('nrrMetrics').innerHTML = nrrHtml;
+                    } else {
+                        document.getElementById('nrrMetrics').innerHTML = '<div class="error">Error: ' + nrrData.error + '</div>';
+                    }
+                } catch (nrrErr) {
+                    console.error('NRR load error:', nrrErr);
+                    document.getElementById('nrrMetrics').innerHTML = '<div class="error">Error loading NRR: ' + nrrErr.message + '</div>';
+                }
+                
+} catch (err) {
                 console.error('Error loading data:', err);
                 document.getElementById('revenueTable').innerHTML = `<div class="error">Error loading data: ${err.message}</div>`;
             }
