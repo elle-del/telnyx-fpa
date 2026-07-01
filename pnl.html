@@ -203,27 +203,8 @@
         </div>
         
         <div class="card">
-            <div class="card-title">Monthly Income Statement</div>
-            <table>
-                <thead><tr><th>Line Item</th><th>2024</th><th>2025</th><th>Jan 26</th><th>Feb 26</th></tr></thead>
-                <tbody>
-                    <tr class="section-header"><td>Revenue</td><td></td><td></td><td></td><td></td></tr>
-                    <tr><td class="indent">Base Revenue</td><td>$126,544,499</td><td>$155,272,841</td><td>$16,242,254</td><td>$16,386,414</td></tr>
-                    <tr><td class="indent">Variable Revenue</td><td>$18,496,284</td><td>$17,300,817</td><td>$1,369,504</td><td>$1,550,137</td></tr>
-                    <tr><td class="indent">Political Revenue</td><td>$231,132</td><td>$0</td><td>$0</td><td>$0</td></tr>
-                    <tr class="subtotal-row"><td>Total Revenue</td><td>$145,271,915</td><td>$172,573,658</td><td>$17,611,758</td><td>$17,936,551</td></tr>
-                    <tr class="section-header"><td>Cost of Goods Sold</td><td></td><td></td><td></td><td></td></tr>
-                    <tr><td class="indent">Network Costs</td><td>$80,348,981</td><td>$78,861,150</td><td>$3,630,864</td><td>$2,316,663</td></tr>
-                    <tr class="subtotal-row"><td>Total COGS</td><td>$80,348,981</td><td>$78,861,150</td><td>$3,630,864</td><td>$2,316,663</td></tr>
-                    <tr class="total-row"><td>Gross Profit</td><td class="positive">$64,922,934</td><td class="positive">$93,712,508</td><td class="positive">$13,980,894</td><td class="positive">$15,619,888</td></tr>
-                    <tr class="section-header"><td>Operating Expenses</td><td></td><td></td><td></td><td></td></tr>
-                    <tr><td class="indent">Sales & Marketing</td><td>$28,000,000</td><td>$26,500,000</td><td>$1,100,000</td><td>$600,000</td></tr>
-                    <tr><td class="indent">Research & Development</td><td>$35,000,000</td><td>$34,000,000</td><td>$1,400,000</td><td>$800,000</td></tr>
-                    <tr><td class="indent">General & Administrative</td><td>$26,680,517</td><td>$25,722,066</td><td>$997,652</td><td>$599,709</td></tr>
-                    <tr class="subtotal-row"><td>Total Operating Expenses</td><td>$89,680,517</td><td>$86,222,066</td><td>$3,497,652</td><td>$1,999,709</td></tr>
-                    <tr class="total-row"><td>Operating Income (EBIT)</td><td class="negative">-$24,757,583</td><td class="positive">$7,490,442</td><td class="positive">$10,483,242</td><td class="positive">$13,620,179</td></tr>
-                </tbody>
-            </table>
+            <div class="card-title">P&L by Metric Type</div>
+            <div id="pnlTable"><div style="color:#94a3b8;padding:16px;">Loading P&L data...</div></div>
         </div>
     </main>
     
@@ -265,21 +246,139 @@
             loadPnLData(year, month);
         }
         
-        function loadPnLData(year, month) {
-            // Placeholder - will connect to API later
-            // For now, show placeholder values
-            document.getElementById('kpiRevenue').textContent = '--';
-            document.getElementById('kpiRevenueChange').textContent = 'Loading...';
-            document.getElementById('kpiCogs').textContent = '--';
-            document.getElementById('kpiCogsChange').textContent = 'Loading...';
-            document.getElementById('kpiGrossProfit').textContent = '--';
-            document.getElementById('kpiGrossMargin').textContent = 'Loading...';
-            document.getElementById('kpiOpex').textContent = '--';
-            document.getElementById('kpiOpexChange').textContent = 'Loading...';
-            document.getElementById('kpiOpIncome').textContent = '--';
-            document.getElementById('kpiOpMargin').textContent = 'Loading...';
-            
-            // TODO: Fetch from /api/pnl?year=YYYY&month=MM
+        var pnlChartInstance = null;
+        var marginChartInstance = null;
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
+
+        function formatCurrency(num) {
+            if (Math.abs(num) >= 1e6) return (num < 0 ? '-' : '') + '$' + (Math.abs(num) / 1e6).toFixed(1) + 'M';
+            if (Math.abs(num) >= 1e3) return (num < 0 ? '-' : '') + '$' + (Math.abs(num) / 1e3).toFixed(0) + 'K';
+            return '$' + num.toFixed(2);
+        }
+
+        async function loadPnLData(year, month) {
+            try {
+                var url = API_BASE + '/api/pnl?year=' + year;
+                if (month && month !== 'all') url += '&month=' + parseInt(month);
+                var res = await fetch(url);
+                var data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                var summary = data.summary || {};
+                var monthly = data.monthly || [];
+                var metricTypes = data.metricTypes || [];
+
+                // Extract key metrics from summary
+                var revenue = summary['CSM Revenue'] || 0;
+                var gp = summary['Gross Profit'] || 0;
+                var gpMargin = revenue !== 0 ? (gp / revenue * 100).toFixed(1) : '0.0';
+
+                document.getElementById('kpiRevenue').textContent = formatCurrency(revenue);
+                document.getElementById('kpiRevenueChange').textContent = year + (month && month !== 'all' ? '-' + month : ' YTD');
+                document.getElementById('kpiGrossProfit').textContent = formatCurrency(gp);
+                document.getElementById('kpiGrossMargin').textContent = gpMargin + '% margin';
+                document.getElementById('kpiGrossMargin').className = 'kpi-change ' + (gp >= 0 ? 'positive' : 'negative');
+
+                // COGS = Revenue - Gross Profit (approximate)
+                var cogs = revenue - gp;
+                document.getElementById('kpiCogs').textContent = formatCurrency(cogs);
+                document.getElementById('kpiCogsChange').textContent = revenue !== 0 ? (cogs / revenue * 100).toFixed(1) + '% of revenue' : '--';
+
+                // Show other metrics if available
+                var opex = summary['Operating Expenses'] || 0;
+                var opIncome = gp - Math.abs(opex);
+                document.getElementById('kpiOpex').textContent = opex !== 0 ? formatCurrency(Math.abs(opex)) : '--';
+                document.getElementById('kpiOpexChange').textContent = opex !== 0 ? 'Total OpEx' : 'N/A in data';
+                document.getElementById('kpiOpIncome').textContent = opex !== 0 ? formatCurrency(opIncome) : '--';
+                document.getElementById('kpiOpMargin').textContent = opex !== 0 && revenue !== 0 ? (opIncome / revenue * 100).toFixed(1) + '% margin' : 'N/A';
+
+                // Build charts from monthly data
+                if (monthly.length > 0) {
+                    var chartLabels = monthly.map(function(m) {
+                        var parts = m.month.split('-');
+                        var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        return names[parseInt(parts[1])-1];
+                    });
+
+                    var revData = monthly.map(function(m) {
+                        var r = m['CSM Revenue'] || {};
+                        return ((r['Total'] || 0) / 1e6).toFixed(2);
+                    });
+                    var gpData = monthly.map(function(m) {
+                        var g = m['Gross Profit'] || {};
+                        return ((g['Total'] || 0) / 1e6).toFixed(2);
+                    });
+
+                    if (pnlChartInstance) pnlChartInstance.destroy();
+                    pnlChartInstance = new Chart(document.getElementById('pnlChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [
+                                { label: 'Revenue', data: revData, backgroundColor: '#3b82f6', order: 2 },
+                                { label: 'Gross Profit', data: gpData, backgroundColor: '#22c55e', order: 1 }
+                            ]
+                        },
+                        options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: function(v) { return '$' + v + 'M'; } }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+                    });
+
+                    var marginData = monthly.map(function(m, i) {
+                        var rev = parseFloat(revData[i]) || 0;
+                        var gp = parseFloat(gpData[i]) || 0;
+                        return rev !== 0 ? (gp / rev * 100).toFixed(1) : 0;
+                    });
+
+                    if (marginChartInstance) marginChartInstance.destroy();
+                    marginChartInstance = new Chart(document.getElementById('marginChart'), {
+                        type: 'line',
+                        data: {
+                            labels: chartLabels,
+                            datasets: [
+                                { label: 'Gross Margin %', data: marginData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.3 }
+                            ]
+                        },
+                        options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: function(v) { return v + '%'; } }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+                    });
+                }
+
+                // Build P&L table
+                var tableHtml = '<table><thead><tr><th>Metric Type</th>';
+                if (monthly.length > 1) {
+                    monthly.forEach(function(m) {
+                        var parts = m.month.split('-');
+                        var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                        tableHtml += '<th class="num">' + names[parseInt(parts[1])-1] + '</th>';
+                    });
+                }
+                tableHtml += '<th class="num">Total</th></tr></thead><tbody>';
+
+                metricTypes.forEach(function(mt) {
+                    var total = summary[mt] || 0;
+                    var isRevenue = mt.toLowerCase().indexOf('revenue') >= 0;
+                    var isProfit = mt.toLowerCase().indexOf('profit') >= 0;
+                    var rowClass = isProfit ? 'total-row' : '';
+                    tableHtml += '<tr class="' + rowClass + '"><td>' + mt + '</td>';
+                    if (monthly.length > 1) {
+                        monthly.forEach(function(m) {
+                            var mData = m[mt] || {};
+                            var val = mData['Total'] || 0;
+                            var cls = val >= 0 ? 'positive' : 'negative';
+                            tableHtml += '<td class="num ' + cls + '">' + formatCurrency(val) + '</td>';
+                        });
+                    }
+                    var cls = total >= 0 ? 'positive' : 'negative';
+                    tableHtml += '<td class="num ' + cls + '" style="font-weight:bold;">' + formatCurrency(total) + '</td>';
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody></table>';
+                document.getElementById('pnlTable').innerHTML = tableHtml;
+
+            } catch (err) {
+                console.error('P&L load error:', err);
+                document.getElementById('kpiRevenue').textContent = 'Error';
+                document.getElementById('kpiRevenueChange').textContent = err.message;
+                document.getElementById('pnlTable').innerHTML = '<div style="background:#7f1d1d;border:1px solid #991b1b;padding:16px;border-radius:8px;color:#fecaca;">Error loading P&L: ' + err.message + '</div>';
+            }
         }
         
         // Initialize on page load
@@ -291,30 +390,6 @@
             applyDateFilter();
         });
         
-        new Chart(document.getElementById('pnlChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Jan 24', 'Apr', 'Jul', 'Oct', 'Jan 25', 'Apr', 'Jul', 'Oct', 'Jan 26', 'Feb'],
-                datasets: [
-                    { label: 'Revenue', data: [11.1, 12.3, 12.1, 12.4, 12.6, 13.5, 13.8, 17.2, 17.6, 17.9], backgroundColor: '#3b82f6', order: 2 },
-                    { label: 'Gross Profit', data: [5.8, 6.2, 4.9, 2.6, 7.0, 7.6, 8.0, 9.0, 14.0, 15.6], backgroundColor: '#22c55e', order: 1 },
-                    { label: 'Operating Income', type: 'line', data: [-1.3, -0.8, -2.3, -4.8, 0.1, 0.9, 0.8, 1.7, 10.5, 13.6], borderColor: '#f59e0b', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, order: 0 }
-                ]
-            },
-            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
-        });
-        
-        new Chart(document.getElementById('marginChart'), {
-            type: 'line',
-            data: {
-                labels: ['Q1 24', 'Q2', 'Q3', 'Q4', 'Q1 25', 'Q2', 'Q3', 'Q4', 'Jan 26', 'Feb'],
-                datasets: [
-                    { label: 'Gross Margin', data: [52.5, 50.8, 40.5, 21.1, 55.3, 56.2, 57.9, 52.3, 79.4, 87.1], borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.3 },
-                    { label: 'Operating Margin', data: [-11.7, -6.5, -19.5, -39.3, 0.5, 6.8, 5.7, 10.0, 59.5, 75.9], borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3 }
-                ]
-            },
-            options: { responsive: true, scales: { y: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
-        });
     </script>
 </body>
 </html>
