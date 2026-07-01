@@ -1,0 +1,10 @@
+# Sensitive data files
+data/rippling_employees.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
