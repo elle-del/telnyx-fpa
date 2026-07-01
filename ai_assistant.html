@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Telnyx FP&A</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; canvas: flex; flex-direction: column; height: 100vh; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #334155; flex-shrink: 0; }
+        .header-left { canvas: flex; align-items: center; gap: 16px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+        .ai-badge { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; letter-spacing: 0.5px; }
+
+        /* Chat layout */
+        .chat-container { flex: 1; display: flex; gap: 0; overflow: hidden; }
+        .chat-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .chart-panel { width: 420px; border-left: 1px solid #334155; canvas: flex; flex-direction: column; flex-shrink: 0; transition: width 0.3s; }
+        .chart-panel.hidden { width: 0; border-left: none; overflow: hidden; }
+        .chart-panel-header { padding: 16px 20px; border-bottom: 1px solid #334155; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .chart-panel-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; align-items: center; justify-content: center; }
+        .chart-placeholder { color: #64748b; text-align: center; font-size: 14px; }
+        .chart-placeholder .icon { font-size: 48px; margin-bottom: 12px; }
+
+        @media (max-width: 1100px) {
+            .chart-panel { width: 100%; max-width: 380px; }
+        }
+        @media (max-width: 800px) {
+            .chart-panel { display: none; }
+        }
+
+        /* Messages */
+        .messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .message { display: flex; gap: 12px; max-width: 720px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+        .message.ai { align-self: flex-start; }
+
+        .avatar { width: 36px; height: 36px; border-radius: 10px; canvas: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .message.ai .avatar { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+        .message.user .avatar { background: #334155; }
+
+        .bubble { padding: 14px 18px; border-radius: 14px; font-size: 14px; line-height: 1.6; }
+        .message.ai .bubble { background: #1e293b; border: 1px solid #334155; border-top-left-radius: 4px; }
+        .message.user .bubble { background: #3b82f6; color: white; border-top-right-radius: 4px; }
+
+        .bubble strong { color: #f8fafc; font-weight: 600; }
+        .bubble p { margin-bottom: 8px; }
+        .bubble p:last-child { margin-bottom: 0; }
+
+        /* Typing indicator */
+        .typing { display: flex; gap: 4px; padding: 8px 0; }
+        .typing span { width: 8px; height: 8px; border-radius: 50%; background: #64748b; animation: bounce 1.4s infinite; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
+
+        /* Suggested questions */
+        .suggestions { padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid #1e293b; flex-shrink: 0; }
+        .suggestion-pill { background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 8px 16px; color: #94a3b8; font-size: 13px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .suggestion-pill:hover { background: #334155; color: #f8fafc; border-color: #3b82f6; }
+
+        /* Input area */
+        .input-area { padding: 16px 24px; border-top: 1px solid #334155; flex-shrink: 0; }
+        .input-row { canvas: flex; gap: 12px; align-items: flex-end; }
+        .input-row input { flex: 1; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 14px 18px; color: #e2e8f0; font-size: 14px; outline: none; transition: border-color 0.15s; }
+        .input-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        .input-row input::placeholder { color: #64748b; }
+        .send-btn { background: #3b82f6; border: none; border-radius: 12px; padding: 14px 20px; color: white; cursor: pointer; font-size: 16px; transition: background 0.15s; canvas: flex; align-items: center; justify-content: center; }
+        .send-btn:hover { background: #2563eb; }
+        .send-btn:disabled { background: #334155; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+            <a href="executive_summary.html" class="nav-item"><span class="nav-icon">📈</span> Executive Summary</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item active"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>AI Financial Assistant <span class="ai-badge">AI</span></h1>
+                    <div class="subtitle">Ask questions about your financial data</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-panel">
+                <div class="messages" id="messages">
+                    <div class="message ai">
+                        <div class="avatar">🤖</div>
+                        <div class="bubble">
+                            <p>👋 Hi! I'm your AI financial assistant. I can answer questions about Telnyx's financial data.</p>
+                            <p>Try asking me about revenue, growth rates, margins, or product breakdowns. Here are some ideas to get started:</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="suggestions" id="suggestions">
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">What was total revenue last month?</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Which product category is growing fastest?</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Show me revenue trend for the last 6 months</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">What's our gross margin?</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Compare Q1 2025 vs Q1 2026 revenue</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Revenue by product category</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Month over month growth</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">How many active customers?</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Top customers by revenue</div>
+                    <div class="suggestion-pill" onclick="askQuestion(this.textContent)">Total revenue for 2025</div>
+                </div>
+
+                <div class="input-area">
+                    <div class="input-row">
+                        <input type="text" id="questionInput" placeholder="Ask a question about your financial data..." 
+                               onkeydown="if(event.key==='Enter') sendQuestion()">
+                        <button class="send-btn" id="sendBtn" onclick="sendQuestion()">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-panel" id="chartPanel">
+                <div class="chart-panel-header">
+                    <span>📊 Data Visualisation</span>
+                    <button onclick="toggleChart()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;">✕</button>
+                </div>
+                <div class="chart-panel-body">
+                    <div class="chart-placeholder" id="chartPlaceholder">
+                        <div class="icon">📊</div>
+                        <div>Charts will appear here when the AI returns data</div>
+                    </div>
+                    <canvas id="aiChart" style="canvas:none;width:100%;max-height:320px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let chartInstance = null;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        function toggleChart() {
+            document.getElementById('chartPanel').classList.toggle('hidden');
+        }
+
+        function formatAnswer(text) {
+            let html = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n• /g, '<br>• ')
+                .replace(/\n(\d+)\. /g, '<br>$1. ')
+                .replace(/\n/g, '<br>');
+            return '<p>' + html + '</p>';
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('messages');
+            const msg = document.createElement('div');
+            msg.className = 'message ' + type;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = type === 'ai' ? '🤖' : '👤';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerHTML = type === 'ai' ? formatAnswer(text) : '<p>' + text + '</p>';
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+            return msg;
+        }
+
+        function addTypingIndicator() {
+            const messages = document.getElementById('messages');
+            const msg = document.createElement('div');
+            msg.className = 'message ai';
+            msg.id = 'typingIndicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+            msg.appendChild(avatar);
+            msg.appendChild(bubble);
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.remove();
+        }
+
+        function renderChart(data, chartType) {
+            const placeholder = document.getElementById('chartPlaceholder');
+            const canvas = document.getElementById('aiChart');
+
+            if (!data || !data.labels || !data.values || chartType === 'none') {
+                placeholder.style.display = 'block';
+                canvas.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('chartPanel').classList.remove('hidden');
+
+            placeholder.style.canvas = 'none';
+            canvas.style.display = 'block';
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const colors = [
+                '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
+                '#ef4444', '#ec4899', '#f97316', '#14b8a6', '#6366f1'
+            ];
+
+            const config = {
+                type: chartType === 'pie' ? 'doughnut' : chartType,
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Value',
+                        data: data.values,
+                        backgroundColor: chartType === 'line' ? 'rgba(59, 130, 246, 0.1)' :
+                                          chartType === 'pie' ? colors.slice(0, data.labels.length) :
+                                          data.values.map(v => v >= 0 ? '#3b82f6' : '#ef4444'),
+                        borderColor: chartType === 'line' ? '#3b82f6' :
+                                     chartType === 'pie' ? colors.slice(0, data.labels.length) :
+                                     data.values.map(v => v >= 0 ? '#3b82f6' : '#ef4444'),
+                        borderWidth: chartType === 'line' ? 2 : 1,
+                        borderRadius: chartType === 'bar' ? 6 : 0,
+                        fill: chartType === 'line',
+                        tension: 0.3,
+                        pointBackgroundColor: '#3b82f6',
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { canvas: chartType === 'pie', labels: { color: '#94a3b8', font: { size: 11 } } },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(ctx) {
+                                    let val = ctx.raw;
+                                    if (Math.abs(val) >= 1000000) return '$' + (val/1000000).toFixed(1) + 'M';
+                                    if (Math.abs(val) >= 1000) return '$' + (val/1000).toFixed(1) + 'K';
+                                    if (chartType === 'bar' && data.labels[0] && data.labels[0].includes('Q')) return '$' + val.toLocaleString();
+                                    return val.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: chartType === 'pie' ? {} : {
+                        x: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } },
+                        y: { ticks: { color: '#94a3b8', font: { size: 11 } }, grid: { color: '#1e293b' } }
+                    }
+                }
+            };
+
+            chartInstance = new Chart(canvas, config);
+        }
+
+        async function askQuestion(question) {
+            document.getElementById('questionInput').value = '';
+            addMessage(question, 'user');
+
+            document.getElementById('suggestions').style.display = 'none';
+
+            addTypingIndicator();
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const resp = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const result = await resp.json();
+
+                removeTypingIndicator();
+                addMessage(result.answer, 'ai');
+
+                if (result.chartType && result.chartType !== 'none' && result.data) {
+                    renderChart(result.data, result.chartType);
+                }
+            } catch (err) {
+                removeTypingIndicator();
+                addMessage('Sorry, I encountered an error connecting to the server. Please make sure the API server is running.', 'ai');
+            }
+
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('questionInput').focus();
+        }
+
+        function sendQuestion() {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+            if (!question) return;
+            askQuestion(question);
+        }
+
+        window.addEventListener('load', () => {
+            document.getElementById('questionInput').focus();
+        });
+    </script>
+</body>
+</html>
