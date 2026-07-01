@@ -96,50 +96,21 @@
             <div class="subtitle">Product line breakdown • Source: Postgres</div>
         </div>
         
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-label">Voice</div>
-                <div class="kpi-value">$68.4M</div>
-                <div class="kpi-change positive">39.6%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Messaging</div>
-                <div class="kpi-value">$52.3M</div>
-                <div class="kpi-change">30.3%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Wireless</div>
-                <div class="kpi-value">$24.8M</div>
-                <div class="kpi-change">14.4%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Numbers</div>
-                <div class="kpi-value">$15.2M</div>
-                <div class="kpi-change">8.8%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">AI/Inference</div>
-                <div class="kpi-value">$8.4M</div>
-                <div class="kpi-change positive">↑ 245% YoY</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Storage</div>
-                <div class="kpi-value">$3.5M</div>
-                <div class="kpi-change">2.0%</div>
-            </div>
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card"><div class="kpi-label">Loading...</div><div class="kpi-value">--</div></div>
         </div>
-        
+
         <div class="charts-grid">
             <div class="card">
                 <div class="card-title">Product Revenue Trend</div>
-                <canvas id="trendChart"></canvas>
+                <canvas id="trendChart"></display>
             </div>
             <div class="card">
-                <div class="card-title">Product Mix (2025)</div>
-                <canvas id="mixChart"></canvas>
+                <div class="card-title" id="mixChartTitle">Product Mix</div>
+                <display id="mixChart"></display>
             </div>
         </div>
-        
+
         <div class="card">
             <div class="card-title">Growth Rates by Product</div>
             <canvas id="growthChart" height="80"></canvas>
@@ -147,35 +118,118 @@
     </main>
     
     <script>
-        new Chart(document.getElementById('trendChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Q1 25', 'Q2', 'Q3', 'Q4'],
-                datasets: [
-                    { label: 'Voice', data: [15.8, 16.4, 17.2, 19.0], backgroundColor: '#3b82f6' },
-                    { label: 'Messaging', data: [12.1, 12.6, 13.2, 14.4], backgroundColor: '#8b5cf6' },
-                    { label: 'Wireless', data: [5.6, 5.9, 6.2, 7.1], backgroundColor: '#22c55e' },
-                    { label: 'Numbers', data: [3.5, 3.6, 3.8, 4.3], backgroundColor: '#f59e0b' },
-                    { label: 'AI/Inference', data: [1.2, 1.8, 2.4, 3.0], backgroundColor: '#ef4444' },
-                    { label: 'Storage', data: [0.7, 0.8, 0.9, 1.1], backgroundColor: '#64748b' }
-                ]
-            },
-            options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: v => '$' + v + 'M' }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
-        });
-        new Chart(document.getElementById('mixChart'), {
-            type: 'doughnut',
-            data: { labels: ['Voice', 'Messaging', 'Wireless', 'Numbers', 'AI/Inference', 'Storage'], datasets: [{ data: [68.4, 52.3, 24.8, 15.2, 8.4, 3.5], backgroundColor: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b'] }] },
-            options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
-        });
-        new Chart(document.getElementById('growthChart'), {
-            type: 'bar',
-            data: {
-                labels: ['AI/Inference', 'Wireless', 'Storage', 'Voice', 'Messaging', 'Numbers'],
-                datasets: [{ label: 'YoY Growth %', data: [245, 42, 28, 18, 15, 12], backgroundColor: ['#ef4444', '#22c55e', '#64748b', '#3b82f6', '#8b5cf6', '#f59e0b'] }]
-            },
-            options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { display: false } } }
-        });
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':8081';
+        var trendChartInstance = null;
+        var mixChartInstance = null;
+        var growthChartInstance = null;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        function formatCurrency(num) {
+            if (Math.abs(num) >= 1e6) return '$' + (num / 1e6).toFixed(1) + 'M';
+            if (Math.abs(num) >= 1e3) return '$' + (num / 1e3).toFixed(0) + 'K';
+            return '$' + num.toFixed(2);
+        }
+
+        async function loadRevenueByProduct() {
+            try {
+                var currentYear = new Date().getFullYear();
+                var lastYear = currentYear - 1;
+                var [prodRes, monthlyRes, lastYearRes] = await Promise.all([
+                    fetch(API_BASE + '/api/revenue/by-product?year=' + currentYear),
+                    fetch(API_BASE + '/api/revenue/monthly?year=' + currentYear),
+                    fetch(API_BASE + '/api/revenue/by-product?year=' + lastYear)
+                ]);
+                var prodData = await prodRes.json();
+                var monthlyData = await monthlyRes.json();
+                var lastYearData = await lastYearRes.json();
+                if (prodData.error) throw new Error(prodData.error);
+
+                var products = prodData.products || {};
+                var lastProducts = lastYearData.products || {};
+                var total = prodData.total || 0;
+                var colors = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#64748b', '#ec4899', '#14b8a6'];
+
+                // Sort products by revenue desc
+                var sorted = Object.entries(products).sort(function(a, b) { return b[1] - a[1]; });
+
+                // KPI cards
+                var kpiHtml = '';
+                sorted.forEach(function(entry, i) {
+                    var name = entry[0];
+                    var rev = entry[1];
+                    var pct = total > 0 ? (rev / total * 100).toFixed(1) : '0.0';
+                    var lastRev = lastProducts[name] || 0;
+                    var growth = lastRev > 0 ? ((rev - lastRev) / lastRev * 100).toFixed(0) : '--';
+                    var changeHtml = growth !== '--' ? '\u2191 ' + growth + '% YoY' : pct + '%';
+                    kpiHtml += '<div class="kpi-card"><div class="kpi-label">' + name + '</div><div class="kpi-value">' + formatCurrency(rev) + '</div><div class="kpi-change positive">' + changeHtml + '</div></div>';
+                });
+                document.getElementById('kpiGrid').innerHTML = kpiHtml;
+
+                // Monthly trend chart (stacked bar)
+                var monthly = monthlyData.monthly || {};
+                var monthKeys = Object.keys(monthly).sort();
+                var productNames = sorted.map(function(e) { return e[0]; });
+                var trendLabels = monthKeys.map(function(m) {
+                    var parts = m.split('-');
+                    var names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return names[parseInt(parts[1])-1];
+                });
+
+                var trendDatasets = productNames.map(function(prod, i) {
+                    return {
+                        label: prod,
+                        data: monthKeys.map(function(m) { return ((monthly[m][prod] || 0) / 1e6).toFixed(2); }),
+                        backgroundColor: colors[i % colors.length],
+                        stack: 'stack0'
+                    };
+                });
+
+                if (trendChartInstance) trendChartInstance.destroy();
+                trendChartInstance = new Chart(document.getElementById('trendChart'), {
+                    type: 'bar', data: { labels: trendLabels, datasets: trendDatasets },
+                    options: { responsive: true, scales: { x: { stacked: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { stacked: true, ticks: { color: '#94a3b8', callback: function(v) { return '$' + v + 'M'; } }, grid: { color: '#334155' } } }, plugins: { legend: { labels: { color: '#e2e8f0' } } } }
+                });
+
+                // Product mix doughnut
+                var mixLabels = sorted.map(function(e) { return e[0]; });
+                var mixValues = sorted.map(function(e) { return (e[1] / 1e6).toFixed(2); });
+                document.getElementById('mixChartTitle').textContent = 'Product Mix (' + currentYear + ')';
+                if (mixChartInstance) mixChartInstance.destroy();
+                mixChartInstance = new Chart(document.getElementById('mixChart'), {
+                    type: 'doughnut',
+                    data: { labels: mixLabels, datasets: [{ data: mixValues, backgroundColor: colors.slice(0, mixLabels.length) }] },
+                    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#e2e8f0' } } } }
+                });
+
+                // Growth chart (horizontal bar)
+                var growthData = sorted.map(function(entry) {
+                    var name = entry[0];
+                    var rev = entry[1];
+                    var lastRev = lastProducts[name] || 0;
+                    return { name: name, growth: lastRev > 0 ? ((rev - lastRev) / lastRev * 100) : 0 };
+                }).sort(function(a, b) { return b.growth - a.growth; });
+
+                if (growthChartInstance) growthChartInstance.destroy();
+                growthChartInstance = new Chart(document.getElementById('growthChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: growthData.map(function(d) { return d.name; }),
+                        datasets: [{ label: 'YoY Growth %', data: growthData.map(function(d) { return d.growth.toFixed(1); }), backgroundColor: growthData.map(function(d, i) { return colors[i % colors.length]; }) }]
+                    },
+                    options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: '#94a3b8', callback: function(v) { return v + '%'; } }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+                });
+
+            } catch (err) {
+                console.error('Revenue by product load error:', err);
+                document.getElementById('kpiGrid').innerHTML = '<div class="kpi-card" style="grid-column: 1 / -1;"><div style="background:#7f1d1d;border:1px solid #991b1b;padding:16px;border-radius:8px;color:#fecaca;">Error loading data: ' + err.message + '</div></div>';
+            }
+        }
+
+        loadRevenueByProduct();
     </script>
-<script>function toggleSidebar() { document.getElementById("sidebar").classList.toggle("collapsed"); document.getElementById("main").classList.toggle("expanded"); document.querySelector(".sidebar-toggle").classList.toggle("open"); }</script>
 </body>
 </html>
