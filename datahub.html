@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Hub - Telnyx FP&A</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; min-height: 100vh; }
+
+        .sidebar { width: 240px; background: #0c1222; border-right: 1px solid #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s; z-index: 100; }
+        .sidebar.collapsed { transform: translateX(-240px); }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: 700; color: #f8fafc; canvas: flex; align-items: center; gap: 8px; }
+        .logo .bolt { color: #facc15; }
+        .nav-section { margin-top: 16px; }
+        .nav-section-title { padding: 8px 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; color: #94a3b8; text-decoration: none; font-size: 14px; transition: all 0.15s; }
+        .nav-item:hover { background: #1e293b; color: #f8fafc; }
+        .nav-item.active { background: #1e293b; color: #f8fafc; border-left: 3px solid #3b82f6; padding-left: 17px; }
+        .nav-icon { width: 20px; text-align: center; }
+
+        .main { margin-left: 240px; flex: 1; padding: 24px; transition: margin-left 0.3s; }
+        .main.expanded { margin-left: 0; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #334155; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-actions { display: flex; gap: 8px; }
+        .menu-toggle { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; cursor: pointer; font-size: 16px; }
+        .menu-toggle:hover { background: #334155; }
+        h1 { font-size: 24px; font-weight: 600; }
+        .subtitle { color: #94a3b8; font-size: 14px; }
+
+        .kpi-grid { canvas: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+        .kpi-card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+        .kpi-label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f8fafc; }
+        .kpi-change { font-size: 14px; margin-top: 4px; color: #94a3b8; }
+        .kpi-change.positive { color: #4ade80; }
+
+        .card { background: #1e293b; border-radius: 12px; padding: 24px; border: 1px solid #334155; margin-bottom: 24px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; canvas: flex; align-items: center; justify-content: space-between; }
+
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        @media (max-width: 1000px) { .content-grid { grid-template-columns: 1fr; } }
+
+        /* Quick Actions */
+        .quick-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+        .action-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+        .action-btn:hover { background: #334155; border-color: #3b82f6; }
+        .action-btn.primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+        .action-btn.primary:hover { background: #2563eb; }
+
+        /* Datasets Table */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 500; text-transform: uppercase; font-size: 11px; }
+        tr:hover { background: #334155; }
+
+        .status-badge { canvas: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-badge.active { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+        .status-badge.pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+        .status-badge.error { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-badge.active .status-dot { background: #4ade80; }
+        .status-badge.pending .status-dot { background: #fbbf24; }
+        .status-badge.error .status-dot { background: #f87171; }
+
+        /* Timeline */
+        .timeline { display: flex; flex-direction: column; gap: 16px; }
+        .timeline-item { display: flex; gap: 12px; align-items: flex-start; }
+        .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; margin-top: 5px; flex-shrink: 0; }
+        .timeline-dot.success { background: #4ade80; }
+        .timeline-dot.warning { background: #fbbf24; }
+        .timeline-dot.error { background: #f87171; }
+        .timeline-content { flex: 1; }
+        .timeline-title { font-size: 13px; font-weight: 500; color: #f8fafc; }
+        .timeline-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        .source-type { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: #0f172a; color: #94a3b8; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 999; align-items: center; justify-content: center; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #64748b; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="logo"><span class="bolt">⚡</span> Telnyx FP&A</div>
+
+        <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span> Home</a>
+
+        <div class="nav-section">
+            <div class="nav-section-title">P&L</div>
+            <a href="pnl_import.html" class="nav-item"><span class="nav-icon">📥</span> Import</a>
+            <a href="pnl_drivers.html" class="nav-item"><span class="nav-icon">⚡</span> Drivers</a>
+            <a href="pnl_miniforecasts.html" class="nav-item"><span class="nav-icon">📊</span> Miniforecasts</a>
+            <a href="pnl_forecast.html" class="nav-item"><span class="nav-icon">🔮</span> Forecast</a>
+            <a href="pnl.html" class="nav-item"><span class="nav-icon">📄</span> P&L</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Balance Sheet</div>
+            <a href="bs_import.html" class="nav-item"><span class="nav-icon">📥</span> BS Import</a>
+            <a href="bs_aged_debtors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Debtors</a>
+            <a href="bs_aged_creditors.html" class="nav-item"><span class="nav-icon">📋</span> Aged Creditors</a>
+            <a href="bs_prepay.html" class="nav-item"><span class="nav-icon">📝</span> Prepay & Acc Inc</a>
+            <a href="bs_accruals.html" class="nav-item"><span class="nav-icon">📝</span> Accruals & Defer</a>
+            <a href="bs_loans.html" class="nav-item"><span class="nav-icon">🏦</span> Loans</a>
+            <a href="bs_fixed_assets.html" class="nav-item"><span class="nav-icon">🏗️</span> Fixed Assets</a>
+            <a href="balance_sheet.html" class="nav-item"><span class="nav-icon">📋</span> Balance Sheet</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Cash Flow</div>
+            <a href="cf_indirect.html" class="nav-item"><span class="nav-icon">📈</span> Indirect Method</a>
+            <a href="cf_direct.html" class="nav-item"><span class="nav-icon">📉</span> Direct Method</a>
+            <a href="cf_13week.html" class="nav-item"><span class="nav-icon">📅</span> 13 Week</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reports</div>
+            <a href="reports.html" class="nav-item"><span class="nav-icon">📊</span> Reports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Data Hub</div>
+            <a href="datahub.html" class="nav-item active"><span class="nav-icon">📊</span> Overview</a>
+            <a href="datahub_sources.html" class="nav-item"><span class="nav-icon">🔌</span> Data Sources</a>
+            <a href="datahub_mapper.html" class="nav-item"><span class="nav-icon">🔀</span> Field Mapper</a>
+            <a href="datahub_calculated.html" class="nav-item"><span class="nav-icon">🧮</span> Calculated Fields</a>
+            <a href="datahub_departments.html" class="nav-item"><span class="nav-icon">🏢</span> Departments</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">AI</div>
+            <a href="ai_assistant.html" class="nav-item"><span class="nav-icon">🤖</span> AI Assistant</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="data_connections.html" class="nav-item"><span class="nav-icon">🔌</span> Data Connections</a>
+            <a href="settings.html" class="nav-item"><span class="nav-icon">⚙️</span> Settings</a>
+        </div>
+    </nav>
+
+    <main class="main" id="main">
+        <div class="header">
+            <div class="header-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1>Data Hub</h1>
+                    <div class="subtitle">Manage data sources, datasets, and field mappings</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Data Sources</div>
+                <div class="kpi-value" id="kpiSources">--</div>
+                <div class="kpi-change">Connected integrations</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Datasets</div>
+                <div class="kpi-value" id="kpiDatasets">--</div>
+                <div class="kpi-change">Active datasets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Records</div>
+                <div class="kpi-value" id="kpiRecords">--</div>
+                <div class="kpi-change">Across all datasets</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Last Import</div>
+                <div class="kpi-value" id="kpiLastImport">--</div>
+                <div class="kpi-change" id="kpiLastImportSource">No imports yet</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="datahub_sources.html" class="action-btn primary">➕ Add Data Source</a>
+            <button class="action-btn" onclick="openCsvImport()">📥 Import CSV</button>
+            <button class="action-btn" onclick="openCreateDataset()">📁 Create Dataset</button>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-title">
+                    <span>Datasets</span>
+                    <span style="font-size: 12px; color: #64748b;" id="datasetCount">Loading...</span>
+                </div>
+                <div id="datasetsTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Source</th>
+                                <th>Records</th>
+                                <th>Last Refresh</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="datasetsBody">
+                            <tr><td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">Loading datasets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <div class="card-title">Recent Imports</div>
+                    <div class="timeline" id="importsTimeline">
+                        <div class="empty-state">
+                            <div class="icon">📥</div>
+                            <p>Loading import history...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- CSV Import Modal -->
+    <div id="csvModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:200; align-items:center; justify-content:center;">
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:24px; width:480px; max-width:90vw;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:18px; font-weight:600;">Import CSV</h2>
+                <button onclick="closeCsvModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:20px;">✕</button>
+            </div>
+            <form id="csvImportForm" onsubmit="handleCsvImport(event)">
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">Dataset Name</label>
+                    <input type="text" id="csvDatasetName" required style="width:100%; padding:10px 12px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;" placeholder="e.g., Q3 Revenue Actuals">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">CSV File</label>
+                    <div id="csvDropZone" style="border:2px dashed #334155; border-radius:8px; padding:32px; text-align:center; cursor:pointer; transition: all 0.15s;" onclick="document.getElementById('csvFileInput').click()">
+                        <div style="font-size:32px; margin-bottom:8px;">📄</div>
+                        <div style="font-size:14px; color:#94a3b8;">Drop CSV file here or click to browse</div>
+                        <div id="csvFileName" style="font-size:13px; color:#3b82f6; margin-top:8px; display:none;"></div>
+                    </div>
+                    <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" style="canvas:none;" onchange="handleFileSelect(this)">
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" onclick="closeCsvModal()" style="padding:10px 18px; background:#334155; border:none; border-radius:8px; color:#e2e8f0; cursor:pointer; font-size:13px;">Cancel</button>
+                    <button type="submit" style="padding:10px 18px; background:#3b82f6; border:none; border-radius:8px; color:white; cursor:pointer; font-size:13px; font-weight:500;">Upload & Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Dataset Modal -->
+    <div id="datasetModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); z-index:200; align-items:center; justify-content:center;">
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:24px; width:480px; max-width:90vw;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:18px; font-weight:600;">Create Dataset</h2>
+                <button onclick="closeDatasetModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:20px;">✕</button>
+            </div>
+            <form id="createDatasetForm" onsubmit="handleCreateDataset(event)">
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">Dataset Name</label>
+                    <input type="text" id="newDatasetName" required style="width:100%; padding:10px 12px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;" placeholder="e.g., Monthly Revenue">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="canvas:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">Description</label>
+                    <textarea id="newDatasetDesc" rows="3" style="width:100%; padding:10px 12px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px; resize:vertical;" placeholder="Brief description of this dataset"></textarea>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">Source</label>
+                    <select id="newDatasetSource" style="width:100%; padding:10px 12px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#e2e8f0; font-size:14px;">
+                        <option value="">Select a data source...</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" onclick="closeDatasetModal()" style="padding:10px 18px; background:#334155; border:none; border-radius:8px; color:#e2e8f0; cursor:pointer; font-size:13px;">Cancel</button>
+                    <button type="submit" style="padding:10px 18px; background:#3b82f6; border:none; border-radius:8px; color:white; cursor:pointer; font-size:13px; font-weight:500;">Create Dataset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('main').classList.toggle('expanded');
+        }
+
+        // State
+        let datasets = [];
+        let sources = [];
+        let selectedFile = null;
+
+        // Load data on page load
+        async function loadData() {
+            await Promise.all([loadSources(), loadDatasets()]);
+        }
+
+        async function loadSources() {
+            try {
+                const res = await fetch('/api/datahub/sources');
+                if (!res.ok) throw new Error('Failed to load sources');
+                sources = await res.json();
+                document.getElementById('kpiSources').textContent = sources.length;
+
+                // Populate source dropdown in create dataset modal
+                const select = document.getElementById('newDatasetSource');
+                sources.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = `${s.name} (${s.type})`;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Error loading sources:', e);
+                document.getElementById('kpiSources').textContent = '0';
+            }
+        }
+
+        async function loadDatasets() {
+            try {
+                const res = await fetch('/api/datahub/datasets');
+                if (!res.ok) throw new Error('Failed to load datasets');
+                datasets = await res.json();
+
+                document.getElementById('kpiDatasets').textContent = datasets.length;
+                document.getElementById('datasetCount').textContent = `${datasets.length} dataset${datasets.length !== 1 ? 's' : ''}`;
+
+                // Calculate total records
+                const totalRecords = datasets.reduce((sum, d) => sum + (d.record_count || 0), 0);
+                document.getElementById('kpiRecords').textContent = formatNumber(totalRecords);
+
+                // Last import
+                const sorted = [...datasets].sort((a, b) => new Date(b.last_refresh || 0) - new Date(a.last_refresh || 0));
+                if (sorted.length > 0 && sorted[0].last_refresh) {
+                    document.getElementById('kpiLastImport').textContent = formatTimeAgo(sorted[0].last_refresh);
+                    document.getElementById('kpiLastImportSource').textContent = sorted[0].name;
+                } else {
+                    document.getElementById('kpiLastImport').textContent = 'Never';
+                }
+
+                renderDatasets();
+                renderTimeline();
+            } catch (e) {
+                console.error('Error loading datasets:', e);
+                document.getElementById('kpiDatasets').textContent = '0';
+                document.getElementById('kpiRecords').textContent = '0';
+                document.getElementById('datasetsBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:24px;">No datasets found. Create one to get started.</td></tr>';
+                document.getElementById('datasetCount').textContent = '0 datasets';
+                renderTimeline();
+            }
+        }
+
+        function renderDatasets() {
+            const tbody = document.getElementById('datasetsBody');
+            if (datasets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:24px;">No datasets yet. Import a CSV or create a dataset to get started.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = datasets.map(d => `
+                <tr style="cursor:pointer;" onclick="window.location.href='datahub_mapper.html?dataset=${d.id}'">
+                    <td style="font-weight:500; color:#f8fafc;">${escapeHtml(d.name)}</td>
+                    <td><span class="source-type">${escapeHtml(d.source_type || 'Manual')}</span></td>
+                    <td>${formatNumber(d.record_count || 0)}</td>
+                    <td style="color:#94a3b8;">${d.last_refresh ? formatTimeAgo(d.last_refresh) : 'Never'}</td>
+                    <td><span class="status-badge ${d.status || 'active'}"><span class="status-dot"></span>${capitalize(d.status || 'active')}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTimeline() {
+            const timeline = document.getElementById('importsTimeline');
+            const imports = datasets
+                .filter(d => d.last_refresh)
+                .sort((a, b) => new Date(b.last_refresh) - new Date(a.last_refresh))
+                .slice(0, 8);
+
+            if (imports.length === 0) {
+                timeline.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📥</div>
+                        <p>No imports yet</p>
+                    </div>`;
+                return;
+            }
+
+            timeline.innerHTML = imports.map(d => `
+                <div class="timeline-item">
+                    <div class="timeline-dot ${d.status === 'error' ? 'error' : 'success'}"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">${escapeHtml(d.name)}</div>
+                        <div class="timeline-meta">${formatNumber(d.record_count || 0)} records • ${formatTimeAgo(d.last_refresh)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // CSV Import
+        function openCsvImport() {
+            document.getElementById('csvModal').style.display = 'flex';
+        }
+        function closeCsvModal() {
+            document.getElementById('csvModal').style.display = 'none';
+            document.getElementById('csvImportForm').reset();
+            document.getElementById('csvFileName').style.display = 'none';
+            selectedFile = null;
+        }
+        function handleFileSelect(input) {
+            if (input.files.length > 0) {
+                selectedFile = input.files[0];
+                const nameEl = document.getElementById('csvFileName');
+                nameEl.textContent = selectedFile.name;
+                nameEl.style.display = 'block';
+                document.getElementById('csvDropZone').style.borderColor = '#3b82f6';
+            }
+        }
+        async function handleCsvImport(e) {
+            e.preventDefault();
+            if (!selectedFile) { alert('Please select a CSV file.'); return; }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('name', document.getElementById('csvDatasetName').value);
+
+            showLoading();
+            try {
+                const res = await fetch('/api/datahub/import/csv', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error('Import failed');
+                closeCsvModal();
+                await loadDatasets();
+            } catch (e) {
+                alert('Import failed: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Create Dataset
+        function openCreateDataset() {
+            document.getElementById('datasetModal').style.display = 'flex';
+        }
+        function closeDatasetModal() {
+            document.getElementById('datasetModal').style.canvas = 'none';
+            document.getElementById('createDatasetForm').reset();
+        }
+        async function handleCreateDataset(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('newDatasetName').value,
+                description: document.getElementById('newDatasetDesc').value,
+                source_id: document.getElementById('newDatasetSource').value || null
+            };
+
+            showLoading();
+            try {
+                const res = await fetch('/api/datahub/datasets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) throw new Error('Failed to create dataset');
+                closeDatasetModal();
+                await loadDatasets();
+            } catch (e) {
+                alert('Failed to create dataset: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helpers
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('active'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('active'); }
+
+        function formatNumber(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return n.toLocaleString();
+        }
+
+        function formatTimeAgo(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Drag and drop for CSV
+        const dropZone = document.getElementById('csvDropZone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#3b82f6'; dropZone.style.background = 'rgba(59,130,246,0.05)'; });
+            dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.style.borderColor = '#334155'; dropZone.style.background = 'transparent'; });
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#3b82f6';
+                dropZone.style.background = 'transparent';
+                if (e.dataTransfer.files.length > 0) {
+                    selectedFile = e.dataTransfer.files[0];
+                    const nameEl = document.getElementById('csvFileName');
+                    nameEl.textContent = selectedFile.name;
+                    nameEl.style.canvas = 'block';
+                }
+            });
+        }
+
+        // Initialize
+        loadData();
+    </script>
+    <script src="chat_widget.js"></script>
+</body>
+</html>
